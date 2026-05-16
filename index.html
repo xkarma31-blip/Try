@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Blob.io — A tiny .io game</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body data-theme="dark">
+  <header class="hud">
+    <div class="hud-left">
+      <strong>Blob.io</strong>
+      <span class="sep">·</span>
+      <span>Score: <span id="score">0</span></span>
+      <span class="sep">·</span>
+      <span>Mass: <span id="mass">20</span></span>
+    </div>
+    <div class="hud-right">
+      <button id="theme-toggle" aria-label="Toggle theme">🌙 Dark</button>
+    </div>
+  </header>
+
+  <main>
+    <canvas id="game"></canvas>
+
+    <div id="overlay" class="overlay">
+      <div class="panel">
+        <h1>Blob.io</h1>
+        <p>Eat smaller blobs. Avoid bigger ones. Survive.</p>
+        <ul class="controls">
+          <li><kbd>Mouse</kbd> — move toward cursor</li>
+          <li><kbd>Space</kbd> — short speed boost (costs mass)</li>
+        </ul>
+        <button id="start-btn">Start Game</button>
+      </div>
+    </div>
+
+    <div id="gameover" class="overlay hidden">
+      <div class="panel">
+        <h1>You got eaten!</h1>
+        <p>Final score: <span id="final-score">0</span></p>
+        <button id="restart-btn">Play Again</button>
+      </div>
+    </div>
+  </main>
+
+  <footer class="credit">
+    <a href="https://github.com/xkarma31-blip/Try" target="_blank" rel="noopener">Source on GitHub</a>
+  </footer>
+
+  <script src="game.js"></script>
+</body>
+</html>
