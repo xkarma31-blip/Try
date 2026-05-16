@@ -40,6 +40,56 @@
   const isTouch = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
   if (isTouch) document.body.classList.add('is-touch');
 
+  // ---------- Fullscreen + landscape ----------
+  const fullscreenBtn = document.getElementById('fullscreen-btn');
+  function inFullscreen() {
+    return !!(document.fullscreenElement || document.webkitFullscreenElement);
+  }
+  async function enterFullscreen() {
+    const el = document.documentElement;
+    try {
+      if (el.requestFullscreen) await el.requestFullscreen({ navigationUI: 'hide' });
+      else if (el.webkitRequestFullscreen) el.webkitRequestFullscreen();
+    } catch (_) { /* user denied / not supported */ }
+    // Try to lock landscape on mobile
+    try {
+      if (screen.orientation && screen.orientation.lock) {
+        await screen.orientation.lock('landscape');
+      }
+    } catch (_) { /* not all browsers allow this */ }
+  }
+  async function exitFullscreen() {
+    try {
+      if (screen.orientation && screen.orientation.unlock) screen.orientation.unlock();
+    } catch (_) {}
+    try {
+      if (document.exitFullscreen) await document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+    } catch (_) {}
+  }
+  function updateFsButton() {
+    fullscreenBtn.textContent = inFullscreen() ? '⛶' : '⛶';
+    fullscreenBtn.title = inFullscreen() ? 'Exit fullscreen' : 'Fullscreen / landscape';
+  }
+  if (fullscreenBtn) {
+    fullscreenBtn.addEventListener('click', () => {
+      if (inFullscreen()) exitFullscreen();
+      else enterFullscreen();
+    });
+    document.addEventListener('fullscreenchange', () => { updateFsButton(); resize(); });
+    document.addEventListener('webkitfullscreenchange', () => { updateFsButton(); resize(); });
+  }
+
+  // Rotate hint when in portrait on a touch device & not in fullscreen
+  function checkOrientation() {
+    if (!isTouch) return;
+    const portrait = window.innerHeight > window.innerWidth;
+    document.body.classList.toggle('show-rotate-hint', portrait && !inFullscreen());
+  }
+  window.addEventListener('resize', checkOrientation);
+  window.addEventListener('orientationchange', checkOrientation);
+  checkOrientation();
+
   // ---------- World ----------
   const WORLD = { w: 3000, h: 3000 };
   const WITCH_EMOJI = ['🧙‍♀️', '🧙‍♂️', '🧙', '🧛‍♀️', '🧟‍♀️', '👻', '🦇'];
@@ -57,6 +107,7 @@
   let kills = 0;
   let spawnTimer = 0;
   let waveLevel = 1;
+  let pendingLevelUps = 0;
   const keys = {};
   const camera = { x: 0, y: 0 };
 
@@ -140,6 +191,7 @@
     spawnTimer = 0;
     paused = false;
     running = true;
+    pendingLevelUps = 0;
 
     // scatter decor
     for (let i = 0; i < 120; i++) {
@@ -494,8 +546,9 @@
       player.xp -= player.xpToNext;
       player.level++;
       player.xpToNext = Math.floor(player.xpToNext * 1.45 + 2);
-      offerUpgrades();
+      pendingLevelUps++;
     }
+    if (pendingLevelUps > 0 && !paused) offerUpgrades();
   }
 
   function updateParticles(dt) {
@@ -560,8 +613,10 @@
         </div>`;
       btn.addEventListener('click', () => {
         u.apply(player);
+        pendingLevelUps--;
         levelupEl.classList.add('hidden');
         paused = false;
+        if (pendingLevelUps > 0) offerUpgrades();
       });
       upgradeChoicesEl.appendChild(btn);
     }

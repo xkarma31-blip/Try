@@ -106,8 +106,8 @@ html, body {
   text-align: right;
 }
 
-#theme-toggle {
-  margin-left: auto;
+#theme-toggle,
+#fullscreen-btn {
   background: var(--panel);
   color: var(--fg);
   border: 1px solid var(--panel-border);
@@ -117,7 +117,33 @@ html, body {
   font-size: 14px;
   pointer-events: auto;
   backdrop-filter: blur(8px);
+  line-height: 1;
 }
+#fullscreen-btn { margin-left: auto; }
+#fullscreen-btn:hover, #theme-toggle:hover { border-color: var(--accent); }
+
+/* Hint when on portrait mobile */
+#rotate-hint {
+  position: fixed;
+  inset: 0;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: var(--bg);
+  color: var(--fg);
+  z-index: 100;
+  text-align: center;
+  padding: 24px;
+  font-size: 16px;
+  gap: 12px;
+}
+#rotate-hint .icon { font-size: 64px; animation: spin 2s ease-in-out infinite; }
+@keyframes spin {
+  0%, 100% { transform: rotate(-15deg); }
+  50% { transform: rotate(15deg); }
+}
+body.show-rotate-hint #rotate-hint { display: flex; }
 
 /* ---------- Canvas ---------- */
 main {
