@@ -276,18 +276,21 @@
       const which = t.clientX < half ? 'move' : 'aim';
       const joy = which === 'move' ? joyMove : joyAim;
       if (touchState[which].active) continue;
-      // Position joystick where finger landed
+      // Position joystick where finger landed (clamped on-screen with a small margin)
       const size = 130;
-      const bottom = 30;
-      joy.style.left = which === 'move' ? `${t.clientX - size/2}px` : 'auto';
-      joy.style.right = which === 'aim' ? `${window.innerWidth - t.clientX - size/2}px` : 'auto';
-      joy.style.bottom = `${window.innerHeight - t.clientY - size/2}px`;
+      const margin = 8;
+      const cx = clamp(t.clientX, size/2 + margin, window.innerWidth  - size/2 - margin);
+      const cy = clamp(t.clientY, size/2 + margin, window.innerHeight - size/2 - margin);
+      joy.style.left = which === 'move' ? `${cx - size/2}px` : 'auto';
+      joy.style.right = which === 'aim' ? `${window.innerWidth - cx - size/2}px` : 'auto';
+      joy.style.bottom = `${window.innerHeight - cy - size/2}px`;
       joy.classList.add('active');
-      const c = joyCenter(joy);
+      // Use the clamped center as the input origin so the stick origin matches
+      // the visible joystick base even when the finger landed near a screen edge.
       touchState[which].active = true;
       touchState[which].id = t.identifier;
-      touchState[which].ox = c.x;
-      touchState[which].oy = c.y;
+      touchState[which].ox = cx;
+      touchState[which].oy = cy;
       touchState[which].dx = 0;
       touchState[which].dy = 0;
       touchState[which].mag = 0;

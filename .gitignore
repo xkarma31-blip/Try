@@ -1,3 +1,14 @@
 node_modules/
 package-lock.json
 .DS_Store
+
+# Playwright test artifacts
+playwright-report/
+test-results/
+.playwright/
+ms-playwright/
+
+# Editor/OS junk
+.idea/
+.vscode/
+*.log

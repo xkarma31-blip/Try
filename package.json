@@ -5,10 +5,13 @@
   "description": "Witches.io — a tiny browser .io game (witch-themed, arrow.io + magica.io style).",
   "type": "module",
   "scripts": {
-    "test": "node test/smoke.mjs",
+    "test": "node test/smoke.mjs && node test/joystick.mjs",
+    "test:smoke": "node test/smoke.mjs",
+    "test:joystick": "node test/joystick.mjs",
     "start": "python3 -m http.server 8000"
   },
   "devDependencies": {
-    "jsdom": "^29.1.1"
+    "jsdom": "^29.1.1",
+    "playwright": "^1.60.0"
   }
 }

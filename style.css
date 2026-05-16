@@ -169,6 +169,11 @@ canvas {
   z-index: 15;
   display: none;
   touch-action: none;
+  /* CRITICAL: the joystick is visual feedback only. Touches must pass
+     THROUGH to the canvas below, otherwise a second finger that lands
+     on top of an already-visible joystick gets swallowed and the second
+     joystick never activates. */
+  pointer-events: none;
 }
 .joystick.active { display: block; }
 
