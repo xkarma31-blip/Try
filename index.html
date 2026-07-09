@@ -2,85 +2,38 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <meta name="theme-color" content="#1a0b2e" />
-  <title>Witches.io — Brew, Blast, Survive</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+  <title>Blobz.io</title>
   <link rel="stylesheet" href="style.css" />
 </head>
-<body data-theme="dark">
-  <header class="hud">
-    <div class="hud-row">
-      <div class="hud-stat">
-        <span class="hud-label">Lvl</span>
-        <span id="level">1</span>
-      </div>
-      <div class="hud-stat hp">
-        <div class="hp-bar"><div id="hp-fill"></div></div>
-        <span id="hp-text">100/100</span>
-      </div>
-      <div class="hud-stat xp">
-        <div class="xp-bar"><div id="xp-fill"></div></div>
-      </div>
-      <div class="hud-stat">
-        <span class="hud-label">Kills</span>
-        <span id="kills">0</span>
-      </div>
-      <button id="fullscreen-btn" aria-label="Toggle fullscreen landscape" title="Fullscreen / landscape">⛶</button>
-      <button id="theme-toggle" aria-label="Toggle theme">🌙</button>
-    </div>
-  </header>
+<body>
+  <canvas id="game"></canvas>
 
-  <main>
-    <canvas id="game"></canvas>
-
-    <!-- Mobile touch controls -->
-    <div id="joystick-move" class="joystick" aria-hidden="true">
-      <div class="joystick-base"><div class="joystick-stick"></div></div>
+  <div id="hud">
+    <div id="score">Mass: 0</div>
+    <div id="leaderboard">
+      <h3>Leaderboard</h3>
+      <ol id="leaderboard-list"></ol>
     </div>
-    <div id="joystick-aim" class="joystick" aria-hidden="true">
-      <div class="joystick-base"><div class="joystick-stick"></div></div>
-    </div>
-
-    <div id="overlay" class="overlay">
-      <div class="panel">
-        <h1>🧙‍♀️ Witches.io</h1>
-        <p>You are a witch in a cursed wood. Brew, blast, survive.</p>
-        <ul class="controls">
-          <li class="desktop-only"><kbd>WASD</kbd> or <kbd>Arrows</kbd> — move</li>
-          <li class="desktop-only"><kbd>Mouse</kbd> — aim · auto-cast at nearest enemy</li>
-          <li class="mobile-only">Left thumb — move</li>
-          <li class="mobile-only">Right thumb — aim (auto-cast otherwise)</li>
-        </ul>
-        <button id="start-btn">Enter the Wood</button>
-      </div>
-    </div>
-
-    <div id="levelup" class="overlay hidden">
-      <div class="panel">
-        <h1>✨ Level Up</h1>
-        <p>Choose your gift.</p>
-        <div id="upgrade-choices" class="upgrades"></div>
-      </div>
-    </div>
-
-    <div id="gameover" class="overlay hidden">
-      <div class="panel">
-        <h1>🕯️ You Perished</h1>
-        <p>Reached level <span id="final-level">1</span> with <span id="final-kills">0</span> kills.</p>
-        <button id="restart-btn">Cast Again</button>
-      </div>
-    </div>
-  </main>
-
-  <div id="rotate-hint">
-    <div class="icon">📱</div>
-    <div>Rotate your device to landscape</div>
-    <div style="font-size:13px;opacity:.7">…or tap ⛶ in the corner to go fullscreen</div>
   </div>
 
-  <footer class="credit">
-    <a href="https://github.com/xkarma31-blip/Try" target="_blank" rel="noopener">github</a>
-  </footer>
+  <div id="start-screen">
+    <div class="panel">
+      <h1>Blobz<span>.io</span></h1>
+      <p>Eat food and smaller blobs to grow. Avoid bigger blobs!</p>
+      <input id="name-input" type="text" maxlength="16" placeholder="Your name" />
+      <button id="play-btn">Play</button>
+      <p class="hint">Move the mouse to steer. Bigger is better.</p>
+    </div>
+  </div>
+
+  <div id="end-screen" class="hidden">
+    <div class="panel">
+      <h1>Game Over</h1>
+      <p>You reached a mass of <span id="final-score">0</span>.</p>
+      <button id="restart-btn">Play Again</button>
+    </div>
+  </div>
 
   <script src="game.js"></script>
 </body>

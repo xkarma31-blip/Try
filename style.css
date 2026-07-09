@@ -1,344 +1,158 @@
-:root {
-  --bg: #1a0b2e;
-  --bg2: #0d0519;
-  --fg: #ede9fe;
-  --muted: #a78bfa;
-  --accent: #c084fc;
-  --accent2: #86efac;
-  --danger: #f87171;
-  --panel: rgba(30, 15, 50, 0.92);
-  --panel-border: #5b21b6;
-  --grid: rgba(192, 132, 252, 0.07);
-  --shadow: 0 12px 40px rgba(0, 0, 0, 0.6), 0 0 60px rgba(192, 132, 252, 0.15);
-}
-
-body[data-theme="light"] {
-  --bg: #f5f3ff;
-  --bg2: #e9d5ff;
-  --fg: #2e1065;
-  --muted: #7c3aed;
-  --accent: #6d28d9;
-  --accent2: #15803d;
-  --danger: #b91c1c;
-  --panel: rgba(255, 255, 255, 0.94);
-  --panel-border: #c4b5fd;
-  --grid: rgba(109, 40, 217, 0.08);
-  --shadow: 0 12px 40px rgba(76, 29, 149, 0.18);
-}
-
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-
-html, body {
+* {
   margin: 0;
   padding: 0;
-  height: 100%;
-  background: var(--bg);
-  color: var(--fg);
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  overflow: hidden;
-  overscroll-behavior: none;
-  user-select: none;
-  -webkit-user-select: none;
-  transition: background-color 0.25s ease, color 0.25s ease;
+  box-sizing: border-box;
 }
 
-/* ---------- HUD ---------- */
-.hud {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  padding: 10px 14px env(safe-area-inset-top, 10px);
-  z-index: 10;
-  pointer-events: none;
-  font-size: 13px;
-}
-
-.hud-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.hud-stat {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
-  padding: 5px 10px;
-  border-radius: 8px;
-  pointer-events: auto;
-  font-weight: 600;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-.hud-label { color: var(--muted); font-weight: 500; }
-
-.hp { flex: 0 1 140px; min-width: 110px; }
-.xp { flex: 1 1 auto; min-width: 60px; }
-
-.hp-bar, .xp-bar {
-  flex: 1;
-  height: 10px;
-  background: rgba(0,0,0,0.3);
-  border-radius: 5px;
-  overflow: hidden;
-  position: relative;
-}
-#hp-fill {
-  height: 100%;
+html,
+body {
   width: 100%;
-  background: linear-gradient(90deg, var(--danger), #fb923c);
-  transition: width 0.2s ease;
-}
-#xp-fill {
   height: 100%;
-  width: 0;
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  transition: width 0.15s ease;
-}
-#hp-text {
-  font-size: 11px;
-  color: var(--fg);
-  min-width: 56px;
-  text-align: right;
+  overflow: hidden;
+  background: #1a1a2e;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: #fff;
+  user-select: none;
 }
 
-#theme-toggle,
-#fullscreen-btn {
-  background: var(--panel);
-  color: var(--fg);
-  border: 1px solid var(--panel-border);
-  padding: 5px 10px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  pointer-events: auto;
-  backdrop-filter: blur(8px);
-  line-height: 1;
+#game {
+  display: block;
+  cursor: crosshair;
 }
-#fullscreen-btn { margin-left: auto; }
-#fullscreen-btn:hover, #theme-toggle:hover { border-color: var(--accent); }
 
-/* Hint when on portrait mobile */
-#rotate-hint {
+#hud {
   position: fixed;
   inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  background: var(--bg);
-  color: var(--fg);
-  z-index: 100;
-  text-align: center;
-  padding: 24px;
-  font-size: 16px;
-  gap: 12px;
-}
-#rotate-hint .icon { font-size: 64px; animation: spin 2s ease-in-out infinite; }
-@keyframes spin {
-  0%, 100% { transform: rotate(-15deg); }
-  50% { transform: rotate(15deg); }
-}
-body.show-rotate-hint #rotate-hint { display: flex; }
-
-/* ---------- Canvas ---------- */
-main {
-  position: relative;
-  width: 100vw;
-  height: 100vh;
-  height: 100dvh;
-}
-
-canvas {
-  display: block;
-  width: 100%;
-  height: 100%;
-  touch-action: none;
-}
-
-/* ---------- Joysticks (mobile) ---------- */
-.joystick {
-  position: fixed;
-  bottom: 30px;
-  width: 130px;
-  height: 130px;
-  z-index: 15;
-  display: none;
-  touch-action: none;
-  /* CRITICAL: the joystick is visual feedback only. Touches must pass
-     THROUGH to the canvas below, otherwise a second finger that lands
-     on top of an already-visible joystick gets swallowed and the second
-     joystick never activates. */
   pointer-events: none;
 }
-.joystick.active { display: block; }
 
-#joystick-move { left: 24px; }
-#joystick-aim { right: 24px; }
-
-.joystick-base {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  background: var(--panel);
-  border: 2px solid var(--panel-border);
-  position: relative;
-  opacity: 0.7;
-  backdrop-filter: blur(6px);
-}
-
-.joystick-stick {
+#score {
   position: absolute;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: var(--accent);
-  border: 2px solid var(--fg);
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  box-shadow: 0 0 20px var(--accent);
+  bottom: 16px;
+  left: 16px;
+  font-size: 20px;
+  font-weight: 600;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.6);
 }
 
-body.is-touch .joystick { display: block; }
+#leaderboard {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 12px 16px;
+  border-radius: 10px;
+  min-width: 180px;
+}
 
-/* ---------- Overlays ---------- */
+#leaderboard h3 {
+  font-size: 15px;
+  margin-bottom: 8px;
+  text-align: center;
+  letter-spacing: 1px;
+}
+
+#leaderboard ol {
+  list-style: none;
+  counter-reset: rank;
+}
+
+#leaderboard li {
+  counter-increment: rank;
+  font-size: 14px;
+  padding: 2px 0;
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+#leaderboard li::before {
+  content: counter(rank) ". ";
+  color: #ffd369;
+}
+
+#leaderboard li.me {
+  color: #ffd369;
+  font-weight: 700;
+}
+
 .overlay {
   position: fixed;
   inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: radial-gradient(ellipse at center, rgba(26, 11, 46, 0.85), rgba(0, 0, 0, 0.92));
-  z-index: 30;
-  animation: fade 0.3s ease;
-  padding: 16px;
+  background: rgba(10, 10, 25, 0.75);
+  backdrop-filter: blur(4px);
+  z-index: 10;
 }
-body[data-theme="light"] .overlay {
-  background: radial-gradient(ellipse at center, rgba(245, 243, 255, 0.85), rgba(196, 181, 253, 0.92));
-}
-.overlay.hidden { display: none; }
 
 .panel {
-  background: var(--panel);
-  border: 1px solid var(--panel-border);
+  background: #16213e;
+  padding: 36px 44px;
   border-radius: 16px;
-  padding: 28px 32px;
   text-align: center;
-  box-shadow: var(--shadow);
-  max-width: 420px;
-  width: 100%;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+  max-width: 90vw;
 }
 
 .panel h1 {
-  margin: 0 0 10px;
-  font-size: 26px;
-  color: var(--accent);
-  text-shadow: 0 0 18px rgba(192, 132, 252, 0.4);
-}
-.panel p { margin: 0 0 18px; color: var(--muted); }
-
-.controls {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 22px;
-  text-align: left;
-}
-.controls li {
-  padding: 5px 0;
-  font-size: 14px;
-  color: var(--muted);
+  font-size: 44px;
+  margin-bottom: 12px;
 }
 
-kbd {
-  background: var(--bg2);
-  border: 1px solid var(--panel-border);
-  border-radius: 4px;
-  padding: 2px 7px;
-  font-size: 12px;
-  font-family: ui-monospace, SFMono-Regular, monospace;
-  color: var(--fg);
+.panel h1 span {
+  color: #ffd369;
 }
 
-.panel button {
-  background: linear-gradient(135deg, var(--accent), var(--muted));
-  color: white;
-  border: none;
+.panel p {
+  color: #c9c9d6;
+  margin-bottom: 18px;
+  line-height: 1.5;
+}
+
+#name-input {
+  width: 100%;
+  padding: 12px 14px;
+  font-size: 16px;
+  border-radius: 8px;
+  border: 2px solid #0f3460;
+  background: #0f3460;
+  color: #fff;
+  margin-bottom: 14px;
+  outline: none;
+}
+
+#name-input:focus {
+  border-color: #ffd369;
+}
+
+button {
   padding: 12px 28px;
-  border-radius: 10px;
   font-size: 16px;
   font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  background: #e94560;
+  color: #fff;
   cursor: pointer;
-  letter-spacing: 0.3px;
-  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
-  transition: transform 0.1s ease, box-shadow 0.2s ease;
+  transition: transform 0.08s ease, background 0.15s ease;
 }
-.panel button:hover { transform: translateY(-2px); box-shadow: 0 10px 28px rgba(124, 58, 237, 0.55); }
-.panel button:active { transform: translateY(0); }
 
-/* ---------- Upgrades ---------- */
-.upgrades {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
+button:hover {
+  background: #ff5e7a;
 }
-.upgrade-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 12px 14px;
-  background: var(--bg2);
-  border: 1px solid var(--panel-border);
-  border-radius: 10px;
-  cursor: pointer;
-  text-align: left;
-  color: var(--fg);
-  font: inherit;
-  width: 100%;
-  transition: transform 0.1s ease, border-color 0.2s ease, background 0.2s ease;
-}
-.upgrade-card:hover {
-  transform: translateX(2px);
-  border-color: var(--accent);
-  background: rgba(192, 132, 252, 0.1);
-}
-.upgrade-icon {
-  font-size: 28px;
-  width: 40px;
-  text-align: center;
-}
-.upgrade-text { flex: 1; }
-.upgrade-name { font-weight: 700; color: var(--accent); }
-.upgrade-desc { font-size: 12px; color: var(--muted); margin-top: 2px; }
 
-/* ---------- Misc ---------- */
-.credit {
-  position: fixed;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 11px;
-  color: var(--muted);
-  z-index: 10;
-  opacity: 0.6;
+button:active {
+  transform: scale(0.96);
 }
-.credit a { color: var(--muted); text-decoration: none; }
 
-@keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+.hint {
+  font-size: 13px;
+  margin-top: 16px;
+  color: #8d8da3;
+}
 
-/* show appropriate help text */
-.mobile-only { display: none; }
-body.is-touch .desktop-only { display: none; }
-body.is-touch .mobile-only { display: list-item; }
-
-/* tighter HUD on small screens */
-@media (max-width: 520px) {
-  .hud-stat { padding: 4px 8px; font-size: 12px; }
-  .hp { min-width: 90px; }
-  #hp-text { display: none; }
-  .panel h1 { font-size: 22px; }
+.hidden {
+  display: none !important;
 }
