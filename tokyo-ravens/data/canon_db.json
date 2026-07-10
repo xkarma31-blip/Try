@@ -1,0 +1,240 @@
+{
+  "meta": {
+    "project": "Tokyo Ravens - Vol.2 RAVEN'S NEST Production Pipeline",
+    "canon_db_version": "1.0.0",
+    "generated": "2026-07-10",
+    "source_input": "Tokyo Ravens light novel Volume 2 (RAVEN'S NEST)",
+    "scope_note": "Per original spec, 'Vol.2' = light novel Vol.2 'RAVEN'S NEST' (Sept 9, 2010). Architecture is volume-agnostic. Anime (24 eps, covers LN vols 1-9) is treated as an adaptation reference, not the primary source for Vol.2 scene content.",
+    "tag_legend": {
+      "HARD_CANON": "Verified across >=1 authoritative source (Wikipedia, official wiki, Fandom, publisher, Baka-Tsuki/archive.org).",
+      "INFERRED": "Reasonable derivation from canon; not directly quoted but consistent with source material.",
+      "UNCERTAIN": "Flagged for verification; do not front-load into scripts without explicit sign-off."
+    }
+  },
+
+  "world": {
+    "premise": {
+      "text": "Japan was thrown into chaos by onmyouji (magicians). Harutora Tsuchimikado was born into an onmyouji family but has no power; his estranged childhood friend Natsume appears and holds him to a childhood promise to become her shikigami (familiar).",
+      "tag": "HARD_CANON",
+      "sources": ["wikipedia_tokyo_ravens", "fandom_tokyo_ravens_plot"]
+    },
+    "history_backbone": {
+      "text": "Onmyodou magic was used by Japan in World War II. Yakou Tsuchimikado performed the 'Taizan Fukun Ritual' intended to make Japan a formidable force; it went wrong, producing the 'Great Spiritual Disaster' (Great Disaster). The Onmyo Agency was established afterward to monitor supernatural activity and combat spirits/demons.",
+      "tag": "HARD_CANON",
+      "sources": ["wikipedia_tokyo_ravens", "mal_tokyo_ravens", "alchetron_tokyo_ravens", "fandom_taizan_fukun"]
+    },
+    "yakou_reincarnation_mechanics": {
+      "text": "Yakou's full backstory and 'reincarnation' mechanics are deliberately obscured early. Later reveal (NOT Vol.2 material): Harutora is the real heir of the Tsuchimikados; his powers are sealed by his father and Natsume is adopted into the family. Do not front-load into Vol.2 scripts.",
+      "tag": "HARD_CANON",
+      "sources": ["wikipedia_tokyo_ravens", "fandom_yakou", "wattpad_chars_harutora"]
+    }
+  },
+
+  "publication": {
+    "author": { "name": "Kōhei Azano", "tag": "HARD_CANON", "sources": ["wikipedia_tokyo_ravens", "goodreads", "fandom_vol2"] },
+    "illustrator": { "name": "Sumihei", "tag": "HARD_CANON", "sources": ["wikipedia_tokyo_ravens", "fandom_vol2", "ranobedb_vol2"] },
+    "publisher": { "name": "KADOKAWA / Fujimi Shobo (Fujimi Fantasia Bunko imprint)", "tag": "HARD_CANON", "sources": ["wikipedia_tokyo_ravens", "fandom_vol2", "ranobedb_vol2"] },
+    "original_run": { "text": "May 20, 2010 - present; 17 main vols + 4 EX", "tag": "HARD_CANON", "sources": ["wikipedia_tokyo_ravens", "goodreads"] },
+    "vol2": {
+      "title": "RAVEN'S NEST",
+      "japanese_title": "東京レイヴンズ2 RAVEN'S NEST",
+      "release_date": "September 9, 2010",
+      "isbn": "978-4-8291-3552-5",
+      "publisher_summary": "Parted with Hokuto, fulfilling the promise with childhood friend Natsume by going to the 'Raven'-training academy, Harutora Tsuchimikado arrived at an onmyou school in Tokyo, but brought something unfamiliar (reunited with it). The yin×yang fantasy overcoming time.",
+      "tag": "HARD_CANON",
+      "sources": ["fandom_vol2", "goodreads", "ranobedb_vol2", "cdjapan"]
+    }
+  },
+
+  "anime_adaptation": {
+    "episodes": 24,
+    "studio": "Eight Bit",
+    "director": "Takaomi Kansaki",
+    "screenplay_series_composition": "Hideyuki Kurata",
+    "music": "Maiko Iuchi",
+    "aired": "October 9, 2013 - March 26, 2014",
+    "coverage": "Adapts LN vols 1-9 (per MAL). Vol.2 material maps to roughly anime eps 4-6 (RAVEN'S NEST -School / -Bonds, days in nest -Holiday).",
+    "tag": "HARD_CANON",
+    "sources": ["wikipedia_tokyo_ravens", "mal_tokyo_ravens", "dubbing_fandom", "primevideo_episodes"],
+    "note": "Anime used only as adaptation reference for tone/pacing, not as primary canon for Vol.2 scenes."
+  },
+
+  "organizations": {
+    "onmyo_agency": {
+      "role": "Government agency overseeing the witchcraft world; monitors supernatural activity, combats spirits/demons; includes an Exorcism Bureau.",
+      "hq_location": "Akihabara (INFERRED - commonly cited in-series; not independently re-verified this session)",
+      "tag": "HARD_CANON",
+      "sources": ["wikipedia_tokyo_ravens", "fandom_plot"]
+    },
+    "onmyo_academy": {
+      "role": "School training licensed onmyouji; the 'Raven'-training academy Harutora and Touji transfer into. Also called Onmyo Prep School / Onmyo Prep Academy.",
+      "location": "Tokyo",
+      "tag": "HARD_CANON",
+      "sources": ["wikipedia_tokyo_ravens", "primevideo_ep4", "fandom_vol2_summary"]
+    }
+  },
+
+  "characters": [
+    {
+      "id": "harutora",
+      "name": "Harutora Tsuchimikado",
+      "role": "Protagonist; son of a branch family of the Tsuchimikado clan.",
+      "traits": [
+        "Born into a distinguished onmyouji family but with no magical powers / cannot see spirit energy (HARD_CANON).",
+        "Made a childhood promise to Natsume to become her shikigami and protect her (HARD_CANON).",
+        "Transfers to the Onmyo Academy in Tokyo to be with Natsume after parting with Hokuto (HARD_CANON).",
+        "Nicknamed 'Baka-tora' (Stupid Tiger) by Hokuto, Natsume, Touji, Suzuka (INFERRED from fandom/anibase).",
+        "Considers himself unlucky; bad at studies; kind, courageous, dense about others' feelings (INFERRED from anibase/japanpowered)."
+      ],
+      "age": 16,
+      "tag": "HARD_CANON",
+      "sources": ["wikipedia_tokyo_ravens", "fandom_harutora", "anibase_harutora", "goodreads"]
+    },
+    {
+      "id": "natsume",
+      "name": "Natsume Tsuchimikado",
+      "role": "Childhood friend / Tsuchimikado main-family heir (per clan tradition).",
+      "traits": [
+        "Presents as male in front of other onmyouji families per clan tradition, hiding true gender (HARD_CANON).",
+        "Implied Yakou's reincarnation-adjacent figure (HARD_CANON - 'Yakou's supposed reincarnation' per multiple sources).",
+        "Has a Gohou-type shikigami named Hokuto, a true dragon spirit, used as a medium to be close to Harutora (HARD_CANON).",
+        "Gender-concealment reveal timing differs between LN/manga/anime - ADAPTATION DECISION REQUIRED (see continuity_risks)."
+      ],
+      "tag": "HARD_CANON",
+      "sources": ["wikipedia_tokyo_ravens", "mal_tokyo_ravens", "wikipedia_chars", "japanpowered"]
+    },
+    {
+      "id": "touji",
+      "name": "Touji Ato",
+      "role": "Childhood friend; Harutora's companion at the Academy.",
+      "traits": [
+        "Illegitimate child treated as a 'demon' (HARD_CANON).",
+        "Host to a living-spirit ogre from a past spiritual disaster; laidback, dry wit (HARD_CANON).",
+        "Joins the Academy to control his inner ogre (HARD_CANON). Vol.2 Ch.5 'One-Armed Oni' centers on this."
+      ],
+      "tag": "HARD_CANON",
+      "sources": ["spec_0_2", "fandom_vol2_ch5", "wikipedia_tokyo_ravens"]
+    },
+    {
+      "id": "suzuka",
+      "name": "Suzuka Dairenji",
+      "role": "Prodigy onmyouji; later transferred into the Academy.",
+      "traits": [
+        "Youngest member of the Twelve Divine Generals (elite First-Class Onmyouji) (INFERRED - shapes.inc/anibase; spec stated 'youngest ever First-Class Onmyouji').",
+        "Arrogant and harsh on the surface with a fragile, kind interior shaped by childhood experimentation by her parents (HARD_CANON).",
+        "Enrolled in the Academy as a penalty imposed by the Onmyo Agency for an incident she caused the previous year (HARD_CANON - Wikipedia ep.10; spec phrased as 'emotional/social correction', which is a softer paraphrase - use penalty framing).",
+        "Appears in Vol.2 continuity via the 'Tricks' chapter arc / later Academy enrollment; her full Academy arc peaks in LN Vol.3-4 (GIRL RETURN)."
+      ],
+      "tag": "HARD_CANON",
+      "sources": ["wikipedia_chars", "shapes_inc_suzuka", "wikipedia_ep10"]
+    },
+    {
+      "id": "kon",
+      "name": "Kon",
+      "role": "Harutora's shikigami.",
+      "traits": [
+        "Diminutive fox-eared (fox-tailed) silver-fox spirit, wears miko-like clothing, wields a wakizashi (HARD_CANON).",
+        "Fiercely loyal to Harutora; gets jealous when he associates with other girls (HARD_CANON).",
+        "The 'something unfamiliar' Harutora brought to the Academy - he could not see/hear her until his spiritual awareness awakened (HARD_CANON - Vol.2 Ch.2 'Ears and Tail').",
+        "Hides a tragic, multi-layered past; later revealed as Hishamaru, one of Yakou's two legendary familiars (HARD_CANON, but the reveal is a LATER-volume beat - do not fully expose in Vol.2)."
+      ],
+      "tag": "HARD_CANON",
+      "sources": ["wikipedia_chars", "shapes_inc_characters", "fandom_vol2_ch2"]
+    },
+    {
+      "id": "kyouko",
+      "name": "Kyouko Kurahashi",
+      "role": "Academy classmate; heiress, mood-maker.",
+      "traits": ["Supporting classmate; Kurahashi family heiress (INFERRED).", "Appears in Vol.2 Academy arc as part of Harutora's new friend group."],
+      "tag": "INFERRED",
+      "sources": ["spec_0_2", "wikipedia_chars"]
+    },
+    {
+      "id": "tenma",
+      "name": "Tenma Momoe",
+      "role": "Academy classmate; shy, stealth-specialist, dependable.",
+      "traits": ["Supporting classmate; stealth specialist (INFERRED).", "Appears in Vol.2 Academy arc."],
+      "tag": "INFERRED",
+      "sources": ["spec_0_2", "wikipedia_chars"]
+    },
+    {
+      "id": "hokuto",
+      "name": "Hokuto",
+      "role": "Natsume's shikigami (appears as a girl); medium to be close to Harutora.",
+      "traits": [
+        "Natsume's shikigami, used so Natsume could be near Harutora (HARD_CANON).",
+        "Vol.2 opens 'parted with Hokuto' - her departure/memory is the catalyst for Harutora enrolling (HARD_CANON - publisher summary).",
+        "Shares the name with another shikigami, a dragon (INFERRED)."
+      ],
+      "tag": "HARD_CANON",
+      "sources": ["wikipedia_chars", "fandom_vol2_summary", "livethesearch_review"]
+    }
+  ],
+
+  "vol2_structure": {
+    "status": "REAL chapter list confirmed (corrects §0.3 placeholder concern). Detailed scene content still requires the actual volume text - a Baka-Tsuki/fan-TL PDF of Vol.2 exists at archive.org and should be fed through Stage 5 to lock beats.",
+    "chapters": [
+      { "num": 1, "title": "Young Ravens' Academy", "tag": "HARD_CANON", "note": "Harutora & Touji arrive at the Onmyo Academy; conflict with classmates." },
+      { "num": 2, "title": "Ears and Tail", "tag": "HARD_CANON", "note": "Kon's introduction; Harutora becomes able to perceive her." },
+      { "num": 3, "title": "Shikigami Showdown", "tag": "HARD_CANON", "note": "Battle of the familiars; Harutora makes friends, upsetting Natsume (mirrors anime ep.5 'Bonds')." },
+      { "num": 4, "title": "Tricks", "tag": "HARD_CANON", "note": "Suzuka-related intrigue arc." },
+      { "num": 5, "title": "One-Armed Oni", "tag": "HARD_CANON", "note": "Touji's half-ogre / living-spirit ogre arc." }
+    ],
+    "sources": ["fandom_vol2", "archive_org_bakatsuki_vol2"]
+  },
+
+  "continuity_risks": [
+    {
+      "id": "CR-1",
+      "topic": "Natsume's gender-concealment reveal timing",
+      "detail": "Varies between LN/manga/anime. Screenplay must specify which continuity is being adapted.",
+      "status": "OPEN - needs creative-direction decision before Stage 10"
+    },
+    {
+      "id": "CR-2",
+      "topic": "Yakou reincarnation / Harutora-as-true-heir",
+      "detail": "Later reveal (post-Vol.2). Do NOT front-load into Vol.2 scripts. Kon-as-Hishamaru also reserved.",
+      "status": "LOCKED - excluded from Vol.2 scope per §0.3"
+    },
+    {
+      "id": "CR-3",
+      "topic": "Natsume tone-calibration",
+      "detail": "Source characterization flagged divisive/'manipulative' by some readers. Preserve canon behavior as written; do not soften or exaggerate without explicit logged creative-direction decision.",
+      "status": "FLAG - Canon QC Auditor tone check (non-blocking)"
+    },
+    {
+      "id": "CR-4",
+      "topic": "Vol.2 detailed scene content",
+      "detail": "Real 5-chapter structure known, but beat-level scene text not yet extracted. Blocking for Stage 5 until Baka-Tsuki PDF (archive.org) is ingested.",
+      "status": "OPEN - blocks Stage 5"
+    },
+    {
+      "id": "CR-5",
+      "topic": "Onmyo Agency HQ = Akihabara",
+      "detail": "Commonly cited in-series but not independently re-verified this session.",
+      "status": "INFERRED - acceptable for background art; upgrade if a primary source is needed"
+    }
+  ],
+
+  "sources": [
+    { "id": "wikipedia_tokyo_ravens", "url": "https://en.wikipedia.org/wiki/Tokyo_Ravens", "type": "encyclopedia" },
+    { "id": "wikipedia_chars", "url": "https://en.wikipedia.org/wiki/List_of_Tokyo_Ravens_characters", "type": "encyclopedia" },
+    { "id": "mal_tokyo_ravens", "url": "https://myanimelist.net/anime/16011/Tokyo_Ravens/", "type": "database" },
+    { "id": "fandom_vol2", "url": "https://tokyo-ravens.fandom.com/wiki/Tokyo_Ravens_Light_Novel_Volume_2", "type": "fan_wiki" },
+    { "id": "fandom_tokyo_ravens_plot", "url": "https://tokyo-ravens.fandom.com/wiki/Tokyo_Ravens", "type": "fan_wiki" },
+    { "id": "fandom_harutora", "url": "https://tokyo-ravens.fandom.com/wiki/Harutora_Tsuchimikado", "type": "fan_wiki" },
+    { "id": "fandom_yakou", "url": "https://tokyo-ravens.fandom.com/wiki/Yakou_Tsuchimikado", "type": "fan_wiki" },
+    { "id": "fandom_taizan_fukun", "url": "https://tokyo-ravens.fandom.com/wiki/Taizan_Fukun_Ritual", "type": "fan_wiki" },
+    { "id": "ranobedb_vol2", "url": "https://ranobedb.org/book/6715", "type": "database" },
+    { "id": "goodreads", "url": "https://www.goodreads.com/series/154897-tokyo-ravens-light-novels", "type": "database" },
+    { "id": "cdjapan", "url": "https://www.cdjapan.co.jp/product/NEOBK-1587831", "type": "retailer" },
+    { "id": "primevideo_episodes", "url": "https://www.primevideo.com/detail/0RBAULFKGJW5KODV24PP4EIH7A", "type": "streaming_synopsis" },
+    { "id": "dubbing_fandom", "url": "https://dubbing.fandom.com/wiki/Tokyo_Ravens", "type": "fan_wiki" },
+    { "id": "shapes_inc_suzuka", "url": "https://shapes.inc/suzukadairenji", "type": "fan_profile" },
+    { "id": "shapes_inc_characters", "url": "https://shapes.inc/fandom/tokyo-ravens/characters", "type": "fan_profile" },
+    { "id": "anibase_harutora", "url": "https://anibase.net/en/character/4WPnJ/Harutora-Tsuchimikado", "type": "database" },
+    { "id": "japanpowered", "url": "https://www.japanpowered.com/anime-articles/tokyo-ravens", "type": "review" },
+    { "id": "wikipedia_ep10", "url": "https://en.wikipedia.org/wiki/Tokyo_Ravens (Episode 10 GIRL RETURN -Prodigy-)", "type": "encyclopedia" },
+    { "id": "archive_org_bakatsuki_vol2", "url": "https://archive.org/download/manga_Tokyo_Ravens/%21Autogenerated%20Baka-Tsuki/Tokyo%20Ravens%20-%20Volume%2002%20-%20RAVEN%27s%20NEST%20%5BBaka-Tsuki%5D%5BAutogenerated%5D.pdf", "type": "fan_translation_pdf" }
+  ]
+}
