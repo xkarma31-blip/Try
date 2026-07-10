@@ -76,7 +76,17 @@ Running diff of every decision made against canon or inference. Entries are appe
 ### Stage gate status
 - Stage 4->5: PASS (CR-4 resolved). Stage 5->6 (Episode Planning): UNBLOCKED.
 
+## Session 2026-07-10 — Stage 6 (Episode Planning)
+
+- Wrote `story/vol2_ep_outline.md`: 5 episodes, ONE LN chapter per episode, ~22 min each
+  (finale 24). Every Stage-5 beat assigned to exactly one episode; no orphans.
+- CR-1 assumption: Natsume male-public throughout (female voice only at 3-7); matches primary
+  text. CR-1 still OPEN for sign-off.
+- CR-2/CR-3 respected (Kon stays Kon; Natsume tone preserved).
+- Suzuka kept OFF-PAGE in all episodes.
+- Stage gate: 5->6 PASS; 6->7 (Scene Planning) UNBLOCKED.
+
 ## Next actions
-- [ ] Stage 6: map 5 chapters -> episodes (anime maps ~eps 4-6; Flag CR-1 decision needed).
-- [ ] Resolve CR-1: creative-direction decision on Natsume reveal continuity (male-public vs early reveal).
-- [ ] Stage 7+: Scene Planning -> Dialogue -> LN prose -> Screenplay per episode.
+- [ ] Stage 7: per-episode scene lists (location/time/characters/goal/emotional beat).
+- [ ] Resolve CR-1: creative-direction decision on Natsume reveal continuity.
+- [ ] Stage 8+: Dialogue -> LN prose -> Screenplay per episode.
