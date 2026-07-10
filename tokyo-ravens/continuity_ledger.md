@@ -118,7 +118,26 @@ Running diff of every decision made against canon or inference. Entries are appe
   cues/[bracket SFX-camera]); all Ep1 narration beats preserved as action/visual direction.
 - Stage gate: **Stage 9 COMPLETE (all 5); 10(Ep1) -> 11 (Storyboard) UNBLOCKED.**
 
-## Next actions
-- [ ] Resolve CR-1: creative-direction decision on Natsume reveal continuity (male-public vs early).
-- [ ] Stage 10 (Eps 2-5): screenplay conversion per episode.
-- [ ] Stage 11+: Storyboard -> Art prompts -> Voice script -> Canva -> QC -> Export.
+## Session 2026-07-10 — Stages 10 (Eps 2-5) + 11-17 (full pipeline completion)
+
+- Stage 10 COMPLETE: `ep02_screenplay.md`…`ep05_screenplay.md` (all 5 episodes, industry format).
+- Stage 11: `visual/storyboard_ep1_5.md` — shot lists + image-gen prompts for all 5 eps; 180°-rule,
+  variety, prompts cross-reference characters_db + locations_db.
+- Stage 12: `visual/char_prompts.md` — turnaround + expression prompts for all 8 chars; CR-2 Kon NOT
+  Hishamaru; Suzuka flagged off-page (design ref only).
+- Stage 13: `visual/bg_prompts.md` — environment prompts for all locations; Akihabara (CR-5) INFERRED.
+- Stage 14: `audio/ep01_vo_script.md` — Ep1 voice script (char/line/[delivery], seiyuu refs, timing
+  vs storyboard); replication noted for Eps 2-5.
+- Stage 15: `publish/canva_briefs.md` — 5 reusable Canva templates (char sheet, title card,
+  storyboard grid, location ref, poster/infographic) + indigo/vermillion/gold brand palette.
+- Stage 16: `qc/report_vol2.md` — FULL audit. All 4 BLOCKING checks PASS (Canon Fidelity, Voice
+  Consistency, Visual Consistency, Timeline Integrity). Format Compliance PASS. Tone (CR-3) FLAGGED
+  for creative director, no alteration. Verdict: APPROVED FOR EXPORT pending CR-1.
+- Stage 17: `export/MANIFEST.md` — naming convention + versioned deliverable manifest + packaging
+  instructions. PACKAGE READY (pending CR-1).
+
+## Final state
+- Pipeline Stages 1-17 EXECUTED. All 4 JSON DBs valid. 38 files produced.
+- ONLY OPEN ITEM: CR-1 (Natsume reveal continuity) — creative-direction decision required before
+  final export sign-off. Not a QC failure.
+- Reusable: for Vol.3+, re-run Stages 1-4 for new material; Stages 5-17 reuse the same library.
