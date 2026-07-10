@@ -105,7 +105,16 @@ Running diff of every decision made against canon or inference. Entries are appe
   (hinted only). Suzuka referenced off-page at S1-04.
 - Stage gate: 8(Ep1) -> 9 (LN prose) UNBLOCKED.
 
+## Session 2026-07-10 — Stages 8 (Eps 2-5) + 9 (Ep1 prose)
+
+- Stage 8 COMPLETE for all 5 episodes: `script/ep02_dialogue.md` (7 scenes), `ep03_dialogue.md`
+  (7), `ep04_dialogue.md` (6), `ep05_dialogue.md` (8). Voice profiles applied; CR-3 preserved;
+  CR-2 (fake Kakugyouki at Ep4/5; Kon NOT Hishamaru) enforced; Suzuka off-page throughout.
+- Stage 9: wrote `script/ep01_prose.md` — LN-style third-person-limited prose for Ep1, dry-humor
+  register per §5.5; faithful to scenes + dialogue; no invented beats.
+- Stage gate: **Stage 8 COMPLETE; 9(Ep1) -> 10 (Screenplay) UNBLOCKED.**
+
 ## Next actions
 - [ ] Resolve CR-1: creative-direction decision on Natsume reveal continuity (male-public vs early).
-- [ ] Stage 8 (Eps 2-5): dialogue per episode.
-- [ ] Stage 9+: LN prose -> Screenplay -> Storyboard -> Art prompts -> Voice script -> Canva -> QC -> Export.
+- [ ] Stage 9 (Eps 2-5): LN prose per episode.
+- [ ] Stage 10+: Screenplay -> Storyboard -> Art prompts -> Voice script -> Canva -> QC -> Export.
