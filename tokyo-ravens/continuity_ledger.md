@@ -86,7 +86,14 @@ Running diff of every decision made against canon or inference. Entries are appe
 - Suzuka kept OFF-PAGE in all episodes.
 - Stage gate: 5->6 PASS; 6->7 (Scene Planning) UNBLOCKED.
 
+## Session 2026-07-10 — Stage 7 (Scene Planning, Ep1)
+
+- Wrote `story/ep01_scenes.md`: 7 scenes (S1-01 -> S1-07) for Ep1, each with location /
+  time-of-day / characters / goal / entry+exit emotional beat. No dialogue (Stage 8).
+- Single-morning compression; CR-1 male-public; Kon only hinted (S1-03); Suzuka off-page.
+- Stage gate: 7(Ep1) -> 8 (Dialogue) UNBLOCKED for Ep1.
+
 ## Next actions
-- [ ] Stage 7: per-episode scene lists (location/time/characters/goal/emotional beat).
+- [ ] Stage 7 (Eps 2-5): repeat scene-list template per episode.
 - [ ] Resolve CR-1: creative-direction decision on Natsume reveal continuity.
 - [ ] Stage 8+: Dialogue -> LN prose -> Screenplay per episode.
