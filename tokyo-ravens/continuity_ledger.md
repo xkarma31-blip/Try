@@ -95,7 +95,17 @@ Running diff of every decision made against canon or inference. Entries are appe
   S5-06 opens Twin-Horned Syndicate thread for Vol.3.
 - Stage gate: **Stage 7 COMPLETE (all 5 eps) -> 8 (Dialogue) UNBLOCKED.**
 
+## Session 2026-07-10 — Stage 8 (Dialogue Writer, Ep1)
+
+- Wrote `script/ep01_dialogue.md`: in-character dialogue for S1-01 -> S1-07, using
+  characters_db.json voice profiles. Informal self-deprecating Harutora; cold/commanding
+  Natsume ("Bakatora"); dry Touji ("mendokusai"); upbeat Kyouko; cordial/blunt Miyo;
+  Kansai-bright Ohtomo; arrogant-friendly komainu.
+- CR-3: Natsume's prickliness preserved, not softened. CR-1 male-public. CR-2 Kon absent
+  (hinted only). Suzuka referenced off-page at S1-04.
+- Stage gate: 8(Ep1) -> 9 (LN prose) UNBLOCKED.
+
 ## Next actions
 - [ ] Resolve CR-1: creative-direction decision on Natsume reveal continuity (male-public vs early).
-- [ ] Stage 8: Dialogue Writer per episode (use characters_db.json voice profiles).
+- [ ] Stage 8 (Eps 2-5): dialogue per episode.
 - [ ] Stage 9+: LN prose -> Screenplay -> Storyboard -> Art prompts -> Voice script -> Canva -> QC -> Export.
