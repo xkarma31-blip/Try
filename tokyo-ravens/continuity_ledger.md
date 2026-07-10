@@ -34,8 +34,29 @@ Running diff of every decision made against canon or inference. Entries are appe
 - Stage 2->3 (Canon DB->Character DB): READY. characters_db.json (Stage 3) can reuse the `characters` block already in canon_db.json.
 - Stage 5 (Story Breakdown): BLOCKED by CR-4 until real Vol.2 text supplied.
 
+## Session 2026-07-10 — Stages 3-4 (Character DB + Timeline/Locations)
+
+### Stage 3 — Character DB (characters_db.json)
+- PROMOTED canon_db.json `characters` block into full bible. All 8 characters meet the
+  >=5 visual + >=3 behavioral anchor rule (Stage 3 spec).
+- Visual anchors based on Eight Bit anime adaptation (covers LN 1-9 incl. Vol.2) and
+  tagged INFERRED (anime adaptation reference) — LN-specific descriptions not re-verified.
+- VOICE refs captured (JP/EN seiyuu) for Stage 14 direction.
+- LINKS: CR-2 (Kon/Hishamaru reserved), CR-3 (Natsume tone), CR-1 (Natsume reveal visual tells).
+
+### Stage 4 — Timeline (timeline.json) + Locations (locations.json)
+- Vol.2 internal order LOCKED: Ch1 Young Ravens' Academy -> Ch2 Ears and Tail ->
+  Ch3 Shikigami Showdown -> Ch4 Tricks -> Ch5 One-Armed Oni.
+- NEW CONSTRAINT logged: Suzuka's on-page Academy *enrollment* is Vol.3-4 (GIRL RETURN),
+  NOT Vol.2. She must NOT be seated as a classmate in Vol.2 Academy scenes. Corrects the
+  spec §0.2 phrasing ("sent to the Academy") which could mislead staging.
+- Akihabara HQ remains INFERRED (CR-5).
+- QC: zero timeline contradictions vs canon_db.json.
+
+### Stage gate status
+- Stage 2->3: PASS. Stage 3->4: PASS. Stage 4->5: BLOCKED by CR-4 (need real Vol.2 text).
+
 ## Next actions
-- [ ] Stage 3: promote canon_db.json `characters` block into characters_db.json with >=5 visual + >=3 behavioral anchors each.
-- [ ] Stage 4: timeline.json + locations.json.
 - [ ] Resolve CR-4: ingest Baka-Tsuki Vol.2 PDF (archive.org) before Stage 5.
 - [ ] Resolve CR-1: creative-direction decision on Natsume reveal continuity.
+- [ ] Stage 5+: Story Breakdown -> Episode Planning -> Scene Planning per episode.

@@ -1,0 +1,69 @@
+{
+  "meta": {
+    "project": "Tokyo Ravens - Vol.2 RAVEN'S NEST Production Pipeline",
+    "db": "locations",
+    "version": "1.0.0",
+    "generated": "2026-07-10",
+    "source_of_truth": "data/canon_db.json",
+    "visual_reference": "Eight Bit anime background style for environment art prompts (Stage 13).",
+    "tag_legend": {
+      "HARD_CANON": "Named/role confirmed in source.",
+      "INFERRED": "Architecture/mood derived from anime adaptation reference or reasonable inference."
+    }
+  },
+  "locations": [
+    {
+      "id": "onmyo_academy",
+      "name": "Onmyo Academy (Onmyo Prep School / 'the Raven'-training academy)",
+      "city": "Tokyo",
+      "role": "Primary Vol.2 setting; school training licensed onmyouji.",
+      "tags": ["HARD_CANON"],
+      "architecture_era": "Modern Japanese academy with occult/Onmyoudo styling (INFERRED)",
+      "mood": "Disciplined, mystical, cliquish; stone + wood + talisman motifs (INFERRED)",
+      "scale": "Campus with classrooms, training grounds, dormitories (INFERRED)",
+      "key_areas": [
+        { "area": "Classroom", "use": "Enrollment tension, classmates' stares (Ch.1)" },
+        { "area": "Training ground / courtyard", "use": "Shikigami Showdown (Ch.3)" },
+        { "area": "Dorm / off-campus route", "use": "Ears and Tail, daily life" }
+      ],
+      "ref": "wikipedia_tokyo_ravens, primevideo_ep4"
+    },
+    {
+      "id": "onmyo_agency_hq",
+      "name": "Onmyo Agency Headquarters",
+      "city": "Akihabara (INFERRED - CR-5)",
+      "role": "Government agency overseeing the witchcraft world; Exorcism Bureau.",
+      "tags": ["HARD_CANON_role", "INFERRED_location"],
+      "architecture_era": "Modern government/occult hybrid; Akihabara tech-district context (INFERRED)",
+      "mood": "Stern, bureaucratic, charged with spiritual energy (INFERRED)",
+      "scale": "Large HQ building; not a primary Vol.2 location (background only)",
+      "ref": "wikipedia_tokyo_ravens, canon_db CR-5"
+    },
+    {
+      "id": "tokyo_modern",
+      "name": "Modern Tokyo (spirit-plagued)",
+      "city": "Tokyo",
+      "role": "Wider setting; destabilized by recurring spiritual disasters.",
+      "tags": ["HARD_CANON"],
+      "architecture_era": "Contemporary urban Tokyo with onmyoudo-tech integration (INFERRED)",
+      "mood": "Urban-fantasy; ordinary streets over a hidden spirit layer (INFERRED)",
+      "scale": "City-wide backdrop",
+      "ref": "wikipedia_tokyo_ravens"
+    },
+    {
+      "id": "tsuchimikado_residence",
+      "name": "Tsuchimikado family home (branch)",
+      "city": "INFERRED (rural/Suburb)",
+      "role": "Harutora's origin; pre-Academy life (memory/flashback).",
+      "tags": ["INFERRED"],
+      "architecture_era": "Traditional Japanese house (INFERRED)",
+      "mood": "Quiet, ordinary; contrast to Academy (INFERRED)",
+      "scale": "Single residence",
+      "ref": "spec_0_2"
+    }
+  ],
+  "qc": {
+    "tag_coverage": "All locations tagged; Akihabara flagged INFERRED (CR-5).",
+    "blocking": "None for Stage 13 (Background Artist) once Stage 5 text is available."
+  }
+}

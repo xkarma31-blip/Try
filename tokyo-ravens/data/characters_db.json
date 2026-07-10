@@ -1,0 +1,218 @@
+{
+  "meta": {
+    "project": "Tokyo Ravens - Vol.2 RAVEN'S NEST Production Pipeline",
+    "db": "characters_db",
+    "version": "1.0.0",
+    "generated": "2026-07-10",
+    "source_of_truth": "data/canon_db.json",
+    "visual_reference": "Eight Bit anime adaptation (covers LN 1-9, includes Vol.2) used as the visual-design baseline for appearance anchors. LN-specific descriptions were NOT independently re-verified this session; all appearance anchors are tagged INFERRED (anime adaptation reference) unless noted.",
+    "anchor_rule": "Each character MUST carry >=5 visual anchors and >=3 behavioral anchors per pipeline Stage 3 spec.",
+    "tag_legend": {
+      "HARD_CANON": "Verified against source text / authoritative wiki.",
+      "INFERRED": "Derived from anime adaptation reference or reasonable canon-consistent inference.",
+      "UNCERTAIN": "Flagged; do not lock into art prompts without sign-off."
+    }
+  },
+
+  "characters": [
+    {
+      "id": "harutora",
+      "name": "Harutora Tsuchimikado",
+      "age": 16,
+      "role": "Protagonist; Tsuchimikado branch-family son; Natsume's shikigami-to-be; transfers into Onmyo Academy.",
+      "visual_anchors": [
+        { "anchor": "Black short hair, slightly messy", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Dark Onmyo Academy uniform (gakuran-style) with family crest", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Average height/build for a teen; unremarkable features", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Often wears a distracted / unlucky expression; prone to comedic accidents", "tag": "INFERRED", "ref": "behavioral_visual" },
+        { "anchor": "Red talisman ribbon gifted by Hokuto, kept as a memento", "tag": "INFERRED", "ref": "vol1_artifact" },
+        { "anchor": "Carries a wooden sword / practice wand early (no real shikigami yet)", "tag": "INFERRED", "ref": "anime_ep4" }
+      ],
+      "behavioral_anchors": [
+        { "anchor": "Speech: informal, self-deprecating; calls himself 'Baka-tora' (Stupid Tiger); earnest and hotheaded", "tag": "HARD_CANON", "ref": "fandom_harutora" },
+        { "anchor": "Emotional range: courageous and kind under pressure; dense about others' feelings; loyal to friends", "tag": "INFERRED", "ref": "anibase_harutora" },
+        { "anchor": "Verbal tic: frequent 'gānbaru' (I'll do my best) despite poor results; apologetic", "tag": "INFERRED", "ref": "anime_tone" },
+        { "anchor": "Does NOT use occult jargon fluently early; leans on others for theory", "tag": "HARD_CANON", "ref": "fandom_harutora" }
+      ],
+      "relationships": [
+        { "with": "natsume", "type": "childhood friend / sworn to protect as shikigami" },
+        { "with": "touji", "type": "closest friend, academy classmate" },
+        { "with": "kon", "type": "master (unaware at first)" },
+        { "with": "hokuto", "type": "lost friend; promise catalyst" }
+      ],
+      "voice_reference": { "jp": "Kaito Ishikawa", "en": "Clifford Chapin", "tag": "HARD_CANON", "ref": "fandom_harutora" }
+    },
+    {
+      "id": "natsume",
+      "name": "Natsume Tsuchimikado",
+      "age": "16 (approx)",
+      "role": "Tsuchimikado main-family heir; presents male per clan tradition; Harutora's commander.",
+      "visual_anchors": [
+        { "anchor": "Long light-blonde / silver hair, usually tied back while presenting male", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Wears the male Academy uniform; carries herself with deliberate masculinity in public", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Slender build; refined, composed features", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Familiar raven-coat / Raven's Wing motif associated with the heir (later)", "tag": "INFERRED", "ref": "fandom_yakou" },
+        { "anchor": "Subtle feminine tells (hidden) — used by adaptation for reveal beats", "tag": "INFERRED", "ref": "cr1_decision" },
+        { "anchor": "Often holds/references Hokuto (her shikigami medium)", "tag": "INFERRED", "ref": "wikipedia_chars" }
+      ],
+      "behavioral_anchors": [
+        { "anchor": "Speech: uses male-first-person + formal, authoritative register in public; cold/commanding", "tag": "HARD_CANON", "ref": "wikipedia_tokyo_ravens" },
+        { "anchor": "Emotional range: proud and stubborn; inner vulnerability about Harutora and her hidden self", "tag": "INFERRED", "ref": "japanpowered" },
+        { "anchor": "Tone-calibration risk (CR-3): source paints her as manipulative/divisive — preserve as written, do not soften", "tag": "HARD_CANON", "ref": "spec_0_3" },
+        { "anchor": "Verbal tic: terse commands to Harutora ('Bakatora'); rare soft smiles in private", "tag": "INFERRED", "ref": "anime_tone" }
+      ],
+      "relationships": [
+        { "with": "harutora", "type": "childhood friend / commands him as shikigami" },
+        { "with": "hokuto", "type": "creator of shikigami medium" },
+        { "with": "touji", "type": "classmate / wary ally" }
+      ],
+      "voice_reference": { "jp": "Kana Hanazawa", "en": "Caitlin Glass", "tag": "HARD_CANON", "ref": "fandom_dub_cast" }
+    },
+    {
+      "id": "touji",
+      "name": "Touji Ato",
+      "age": "16 (approx)",
+      "role": "Harutora's childhood friend; half-ogre host; Academy classmate.",
+      "visual_anchors": [
+        { "anchor": "Wears an eyepatch over one eye (seals his living-spirit ogre)", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Tall, lean, casual posture; often hands in pockets", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Dark hair; relaxed, slightly disheveled look", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "When ogre surfaces: eye glows / arm manifests oni traits (Vol.2 Ch.5 One-Armed Oni)", "tag": "HARD_CANON", "ref": "fandom_vol2_ch5" },
+        { "anchor": "Standard Academy uniform worn loosely", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Carries a talisman-restraining charm for his ogre", "tag": "INFERRED", "ref": "vol2_ch5" }
+      ],
+      "behavioral_anchors": [
+        { "anchor": "Speech: laidback, dry wit; understated; few words, well-timed jabs", "tag": "HARD_CANON", "ref": "spec_0_2" },
+        { "anchor": "Emotional range: calm exterior; protective of Harutora; resigned about his ogre", "tag": "INFERRED", "ref": "spec_0_2" },
+        { "anchor": "Verbal tic: sardonic 'mendokusai' (what a pain); deadpan", "tag": "INFERRED", "ref": "anime_tone" },
+        { "anchor": "Does not boast about power; steps in decisively when friends threatened", "tag": "HARD_CANON", "ref": "spec_0_2" }
+      ],
+      "relationships": [
+        { "with": "harutora", "type": "closest friend since childhood" },
+        { "with": "natsume", "type": "classmate / wary ally" }
+      ],
+      "voice_reference": { "jp": "Ryohei Kimura", "en": "Ian Sinclair", "tag": "HARD_CANON", "ref": "fandom_dub_cast" }
+    },
+    {
+      "id": "suzuka",
+      "name": "Suzuka Dairenji",
+      "age": 14,
+      "role": "Prodigy onmyouji; youngest of the Twelve Divine Generals; later Academy transfer (penalty).",
+      "visual_anchors": [
+        { "anchor": "Twin-tail hairstyle; youthful, sharp features", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Ornate/aristocratic onmyouji attire distinct from Academy uniform when in Agency mode", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Small stature befitting age 14", "tag": "HARD_CANON", "ref": "shapes_inc_suzuka" },
+        { "anchor": "Often paired with her shikigami Tsuchigumo (spider familiar)", "tag": "INFERRED", "ref": "wikipedia_chars" },
+        { "anchor": "Expressive, prideful body language; pouts when flustered", "tag": "INFERRED", "ref": "anime_tone" },
+        { "anchor": "Later wears Academy uniform after transfer (Vol.3-4 arc)", "tag": "INFERRED", "ref": "wikipedia_ep10" }
+      ],
+      "behavioral_anchors": [
+        { "anchor": "Speech: arrogant, imperious; uses high-handed honorifics; breaks into tsundere denial", "tag": "HARD_CANON", "ref": "shapes_inc_suzuka" },
+        { "anchor": "Emotional range: harsh surface over fragile, kind interior shaped by parental experimentation", "tag": "HARD_CANON", "ref": "spec_0_2" },
+        { "anchor": "Verbal tic: 'kisama' / sharp retorts; 'i-it's not like I care!' tsunde-re beats", "tag": "INFERRED", "ref": "anime_tone" },
+        { "anchor": "Deep magical-theory knowledge; lectures others condescendingly", "tag": "HARD_CANON", "ref": "shapes_inc_suzuka" }
+      ],
+      "relationships": [
+        { "with": "harutora", "type": "rival / one-sided crush (later)" },
+        { "with": "natsume", "type": "rivalrous but close (later)" }
+      ],
+      "voice_reference": { "jp": "Ayane Sakura", "en": "Jad Saxton", "tag": "HARD_CANON", "ref": "fandom_dub_cast" }
+    },
+    {
+      "id": "kon",
+      "name": "Kon",
+      "role": "Harutora's Gohou-type shikigami; fox-eared silver-fox spirit in miko clothing.",
+      "visual_anchors": [
+        { "anchor": "Small stature; fox ears + fox tail", "tag": "HARD_CANON", "ref": "wikipedia_chars" },
+        { "anchor": "Silver-fox coloration; miko-style clothing (white/red)", "tag": "HARD_CANON", "ref": "wikipedia_chars" },
+        { "anchor": "Wields a short blade (wakizashi)", "tag": "HARD_CANON", "ref": "wikipedia_chars" },
+        { "anchor": "Initially invisible/inaudible to Harutora until his awareness awakens (Vol.2 Ch.2 Ears and Tail)", "tag": "HARD_CANON", "ref": "fandom_vol2_ch2" },
+        { "anchor": "Expressive, large eyes; childlike proportions", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Later reveals Hishamaru form (reserved — CR-2, NOT Vol.2)", "tag": "HARD_CANON", "ref": "wikipedia_chars" }
+      ],
+      "behavioral_anchors": [
+        { "anchor": "Speech: childlike, devoted; calls Harutora 'Harutora-sama'; possessive", "tag": "HARD_CANON", "ref": "shapes_inc_characters" },
+        { "anchor": "Emotional range: fiercely loyal; jealous when Harutora nears other girls", "tag": "HARD_CANON", "ref": "wikipedia_chars" },
+        { "anchor": "Independent thought/action (rare Gohou-type); acts on own initiative to protect master", "tag": "HARD_CANON", "ref": "wikipedia_chars" },
+        { "anchor": "Verbal tic: '~na no!' (isn't it!) ; pouts when ignored", "tag": "INFERRED", "ref": "anime_tone" }
+      ],
+      "relationships": [
+        { "with": "harutora", "type": "master (bound shikigami)" },
+        { "with": "natsume", "type": "fellow familiar / wary" }
+      ],
+      "voice_reference": { "jp": "Aki Toyosaki", "en": "Monica Rial", "tag": "HARD_CANON", "ref": "wikipedia_chars" }
+    },
+    {
+      "id": "kyouko",
+      "name": "Kyouko Kurahashi",
+      "role": "Academy classmate; Kurahashi-family heiress; mood-maker.",
+      "visual_anchors": [
+        { "anchor": "Stylish Academy uniform worn with confidence", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Friendly, open facial expression; heiress poise", "tag": "INFERRED", "ref": "spec_0_2" },
+        { "anchor": "Often at center of class socializing", "tag": "INFERRED", "ref": "anime_ep5" },
+        { "anchor": "Carries family-crest accessories", "tag": "INFERRED", "ref": "spec_0_2" },
+        { "anchor": "Bright color accent in outfit vs classmates", "tag": "INFERRED", "ref": "anime_design" }
+      ],
+      "behavioral_anchors": [
+        { "anchor": "Speech: upbeat, social, inclusive; natural leader of classroom mood", "tag": "INFERRED", "ref": "spec_0_2" },
+        { "anchor": "Emotional range: warm; occasionally sharp when family honor pressed", "tag": "INFERRED", "ref": "spec_0_2" },
+        { "anchor": "Verbal tic: enthusiastic agreements; mediates group tension", "tag": "INFERRED", "ref": "anime_tone" }
+      ],
+      "relationships": [
+        { "with": "harutora", "type": "classmate / friend" },
+        { "with": "tenma", "type": "classmate / friend" }
+      ],
+      "voice_reference": { "jp": "Unspecified in research", "en": "Leah Clark", "tag": "INFERRED", "ref": "fandom_dub_cast" }
+    },
+    {
+      "id": "tenma",
+      "name": "Tenma Momoe",
+      "role": "Academy classmate; shy, stealth-specialist, dependable.",
+      "visual_anchors": [
+        { "anchor": "Quiet, unobtrusive posture; blends into background", "tag": "INFERRED", "ref": "spec_0_2" },
+        { "anchor": "Standard Academy uniform; modest styling", "tag": "INFERRED", "ref": "anime_design" },
+        { "anchor": "Often positioned at edge of group shots", "tag": "INFERRED", "ref": "anime_ep5" },
+        { "anchor": "Carries stealth/concealment talismans", "tag": "INFERRED", "ref": "spec_0_2" },
+        { "anchor": "Calm, watchful expression", "tag": "INFERRED", "ref": "spec_0_2" }
+      ],
+      "behavioral_anchors": [
+        { "anchor": "Speech: soft-spoken, precise; speaks only when needed", "tag": "INFERRED", "ref": "spec_0_2" },
+        { "anchor": "Emotional range: dependable; quietly anxious; loyal", "tag": "INFERRED", "ref": "spec_0_2" },
+        { "anchor": "Verbal tic: hesitant agreement; reliable follow-through", "tag": "INFERRED", "ref": "anime_tone" }
+      ],
+      "relationships": [
+        { "with": "harutora", "type": "classmate / friend" },
+        { "with": "kyouko", "type": "classmate / friend" }
+      ],
+      "voice_reference": { "jp": "Unspecified in research", "en": "Josh Grelle", "tag": "INFERRED", "ref": "fandom_dub_cast" }
+    },
+    {
+      "id": "hokuto",
+      "name": "Hokuto",
+      "role": "Natsume's shikigami (girl form); medium to be near Harutora. Vol.2 opens 'parted with Hokuto'.",
+      "visual_anchors": [
+        { "anchor": "Girl-form shikigami; bright, energetic design", "tag": "INFERRED", "ref": "wikipedia_chars" },
+        { "anchor": "Tied to Natsume's memories of Harutora", "tag": "HARD_CANON", "ref": "wikipedia_chars" },
+        { "anchor": "Associated with the red ribbon Harutora keeps", "tag": "INFERRED", "ref": "vol1_artifact" },
+        { "anchor": "Name shared with a dragon shikigami (INFERRED)", "tag": "INFERRED", "ref": "wikipedia_chars" },
+        { "anchor": "Absent/passed at Vol.2 open — shown via memory/flashback only", "tag": "HARD_CANON", "ref": "fandom_vol2_summary" }
+      ],
+      "behavioral_anchors": [
+        { "anchor": "Speech: cheerful, teasing; pushes Harutora to become an onmyo mage", "tag": "INFERRED", "ref": "wikipedia_ep1" },
+        { "anchor": "Emotional range: warm, encouraging; the emotional catalyst for Harutora's promise", "tag": "HARD_CANON", "ref": "wikipedia_chars" },
+        { "anchor": "Verbal tic: playful challenges; 'I'll take care of the ribbon'", "tag": "INFERRED", "ref": "wikipedia_ep1" }
+      ],
+      "relationships": [
+        { "with": "natsume", "type": "created by / shikigami of" },
+        { "with": "harutora", "type": "childhood friend; promise holder" }
+      ],
+      "voice_reference": { "jp": "Unspecified in research", "en": "Tia Ballard", "tag": "INFERRED", "ref": "fandom_dub_cast" }
+    }
+  ],
+
+  "qc": {
+    "anchor_count_check": "All 8 characters meet >=5 visual + >=3 behavioral anchors.",
+    "voice_consistency": "Behavioral anchors reference characters_db for all downstream Dialogue Writer (Stage 8) and Voice Script (Stage 14).",
+    "cr_links": ["CR-2 (Kon/Hishamaru reserved)", "CR-3 (Natsume tone)", "CR-1 (Natsume reveal visual tells)"]
+  }
+}

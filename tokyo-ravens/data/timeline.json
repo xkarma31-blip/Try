@@ -1,0 +1,34 @@
+{
+  "meta": {
+    "project": "Tokyo Ravens - Vol.2 RAVEN'S NEST Production Pipeline",
+    "db": "timeline",
+    "version": "1.0.0",
+    "generated": "2026-07-10",
+    "source_of_truth": "data/canon_db.json",
+    "note": "Vol.2 internal chronology is a single academic term at the Onmyo Academy. Exact calendar dates are INFERRED; only relative ordering is HARD_CANON (from the 5-chapter structure)."
+  },
+  "era_backbone": [
+    { "id": "E1", "event": "World War II: Yakou Tsuchimikado performs Taizan Fukun Ritual", "tag": "HARD_CANON", "ref": "wikipedia_tokyo_ravens" },
+    { "id": "E2", "event": "Ritual fails -> Great Spiritual Disaster (Great Disaster)", "tag": "HARD_CANON", "ref": "wikipedia_tokyo_ravens" },
+    { "id": "E3", "event": "Onmyo Agency established to monitor/combat spirits", "tag": "HARD_CANON", "ref": "wikipedia_tokyo_ravens" },
+    { "id": "E4", "event": "Modern era: onmyodou refined for medicine/tech; Harutora born powerless to branch family", "tag": "HARD_CANON", "ref": "wikipedia_tokyo_ravens" },
+    { "id": "E5", "event": "Childhood promise: Harutora -> Natsume (become shikigami)", "tag": "HARD_CANON", "ref": "wikipedia_tokyo_ravens" },
+    { "id": "E6", "event": "Vol.1: Hokuto arc; Harutora parts with Hokuto", "tag": "HARD_CANON", "ref": "fandom_vol2_summary" }
+  ],
+  "vol2_sequence": [
+    { "order": 1, "chapter": "Young Ravens' Academy", "phase": "Enrollment", "beats": ["Harutora & Touji arrive at Onmyo Academy in Tokyo", "Classroom tension / curious+hostile stares from classmates", "Reunion with Natsume (male-presenting heir)"], "tag": "HARD_CANON", "ref": "fandom_vol2" },
+    { "order": 2, "chapter": "Ears and Tail", "phase": "Awakening", "beats": ["Harutora perceives Kon (the 'something unfamiliar' he brought)", "Fox-eared shikigami revealed; bond established"], "tag": "HARD_CANON", "ref": "fandom_vol2_ch2" },
+    { "order": 3, "chapter": "Shikigami Showdown", "phase": "Conflict+Bond", "beats": ["Battle of the familiars", "Harutora makes friends (Kyouko/Tenma), upsetting Natsume", "Natsume endangered -> Harutora + friends fight to save her"], "tag": "HARD_CANON", "ref": "primevideo_ep5" },
+    { "order": 4, "chapter": "Tricks", "phase": "Intrigue", "beats": ["Suzuka-related schemes/tricks arc", "Sets up later Academy enrollment (Vol.3-4)"], "tag": "HARD_CANON", "ref": "fandom_vol2_ch4" },
+    { "order": 5, "chapter": "One-Armed Oni", "phase": "Touji arc", "beats": ["Touji's living-spirit ogre surfaces", "Half-ogre confrontation / control"], "tag": "HARD_CANON", "ref": "fandom_vol2_ch5" }
+  ],
+  "relative_timing_constraints": [
+    "Enrollment (Ch.1) precedes Awakening (Ch.2) precedes Showdown (Ch.3) precedes Tricks (Ch.4) precedes One-Armed Oni (Ch.5) — fixed order.",
+    "Suzuka's on-page Academy ENROLLMENT is Vol.3-4 (GIRL RETURN), NOT Vol.2 — do not place her as a seated classmate in Vol.2 Academy scenes (CR on spec §0.2 phrasing).",
+    "Natsume gender reveal: timing decision (CR-1) governs whether reveal lands inside Vol.2 or is deferred."
+  ],
+  "qc": {
+    "contradictions": "Zero timeline contradictions detected vs canon_db.json.",
+    "blocking": "None. Stage 4 passes to Stage 5 (subject to CR-4 text ingestion)."
+  }
+}
