@@ -112,9 +112,13 @@ Running diff of every decision made against canon or inference. Entries are appe
   CR-2 (fake Kakugyouki at Ep4/5; Kon NOT Hishamaru) enforced; Suzuka off-page throughout.
 - Stage 9: wrote `script/ep01_prose.md` — LN-style third-person-limited prose for Ep1, dry-humor
   register per §5.5; faithful to scenes + dialogue; no invented beats.
-- Stage gate: **Stage 8 COMPLETE; 9(Ep1) -> 10 (Screenplay) UNBLOCKED.**
+- Stage 9 COMPLETE for all 5 episodes: `ep02_prose.md`, `ep03_prose.md`, `ep04_prose.md`,
+  `ep05_prose.md` (third-person-limited; Ep4 toggles classroom/arena POV; Ep5 has memory codas).
+- Stage 10: wrote `script/ep01_screenplay.md` — industry-format screenplay (sluglines/action/
+  cues/[bracket SFX-camera]); all Ep1 narration beats preserved as action/visual direction.
+- Stage gate: **Stage 9 COMPLETE (all 5); 10(Ep1) -> 11 (Storyboard) UNBLOCKED.**
 
 ## Next actions
 - [ ] Resolve CR-1: creative-direction decision on Natsume reveal continuity (male-public vs early).
-- [ ] Stage 9 (Eps 2-5): LN prose per episode.
-- [ ] Stage 10+: Screenplay -> Storyboard -> Art prompts -> Voice script -> Canva -> QC -> Export.
+- [ ] Stage 10 (Eps 2-5): screenplay conversion per episode.
+- [ ] Stage 11+: Storyboard -> Art prompts -> Voice script -> Canva -> QC -> Export.
