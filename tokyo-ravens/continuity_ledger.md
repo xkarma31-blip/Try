@@ -56,7 +56,27 @@ Running diff of every decision made against canon or inference. Entries are appe
 ### Stage gate status
 - Stage 2->3: PASS. Stage 3->4: PASS. Stage 4->5: BLOCKED by CR-4 (need real Vol.2 text).
 
+## Session 2026-07-10 — Stage 5 (Story Breakdown) + text ingestion
+
+### Text ingestion (resolves CR-4)
+- INGESTED real Vol.2 text: Baka-Tsuki `_djvu.txt` OCR (archive.org). Delegated extraction
+  to explore agent; all 5 chapters confirmed COMPLETE (no mid-scene cutoff).
+- Wrote `story/vol2_beat_sheet.md` — 5 chapters, 30+ beats, 100% traceable to primary text.
+  Zero [ADAPTED] beats required (source complete).
+
+### Corrections surfaced
+- Ch.4 title = **"Kodoku"** (primary text), NOT "Tricks" (Fandom wiki). Logged CR-6;
+  resolved in favor of primary text. canon_db.json vol2_structure updated.
+- CONFIRMED: Suzuka Dairenji is OFF-PAGE in Vol.2 (referenced only). Stage-4 constraint
+  (no seated-classmate staging) stands. canon_db.json suzuka entry corrected.
+- Kyouko + Tenma ARE present in Vol.2 as classmates (canon_db characters confirmed).
+- Natsume public male presentation; female voice surfaces only in private blow-up (Ch.3 3-7).
+  Feeds CR-1 adaptation decision.
+
+### Stage gate status
+- Stage 4->5: PASS (CR-4 resolved). Stage 5->6 (Episode Planning): UNBLOCKED.
+
 ## Next actions
-- [ ] Resolve CR-4: ingest Baka-Tsuki Vol.2 PDF (archive.org) before Stage 5.
-- [ ] Resolve CR-1: creative-direction decision on Natsume reveal continuity.
-- [ ] Stage 5+: Story Breakdown -> Episode Planning -> Scene Planning per episode.
+- [ ] Stage 6: map 5 chapters -> episodes (anime maps ~eps 4-6; Flag CR-1 decision needed).
+- [ ] Resolve CR-1: creative-direction decision on Natsume reveal continuity (male-public vs early reveal).
+- [ ] Stage 7+: Scene Planning -> Dialogue -> LN prose -> Screenplay per episode.
