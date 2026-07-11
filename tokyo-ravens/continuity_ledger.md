@@ -141,3 +141,17 @@ Running diff of every decision made against canon or inference. Entries are appe
 - ONLY OPEN ITEM: CR-1 (Natsume reveal continuity) — creative-direction decision required before
   final export sign-off. Not a QC failure.
 - Reusable: for Vol.3+, re-run Stages 1-4 for new material; Stages 5-17 reuse the same library.
+
+## Session 2026-07-11 — CR-1 resolved + Stage 14 completed + package closed
+
+- CR-1 RESOLVED: creative-direction DECISION LOCKED — adapt LN primary continuity; Natsume
+  male-public in all public Vol.2 scenes; true female voice only at S3-07 (private). Updated in
+  canon_db.json continuity_risks. All prior stages already complied; no rework needed.
+- Stage 14 COMPLETED for all 5 episodes: recreated `audio/ep02_vo_script.md`…`ep05_vo_script.md`
+  (earlier writes were lost to interrupted tool calls). Audio layer now fully done.
+- Export MANIFEST + QC report updated: all four BLOCKING checks PASS, all open items RESOLVED.
+  **FINAL VERDICT: PACKAGE READY (v1).**
+
+## Final deliverable count
+- 42 files across data/ story/ script/ visual/ audio/ publish/ qc/ export/ + prompts/ + README.
+- All 4 JSON DBs validate. Stages 1-17 fully executed.

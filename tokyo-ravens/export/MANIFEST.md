@@ -48,8 +48,8 @@ tools; this manifest defines the deliverable set + filenames so handoff is unamb
 
 ## Stage 17 gate
 - All listed files present (as source .md/json); versioned; named per convention.
-- **Open before final sign-off:** CR-1 (Natsume reveal) creative-direction decision (see qc report).
-- **RESULT: PACKAGE READY (pending CR-1).**
+- **CR-1 RESOLVED** (male-public faithful to primary text) — no remaining blockers.
+- **RESULT: PACKAGE READY (v1).** All 5 episodes fully scripted, boarded, prompted, and QC-passed.
 
 ---
 *Pipeline complete: Stages 1–17 executed. Architecture is volume-agnostic — for Vol.3+, re-run
