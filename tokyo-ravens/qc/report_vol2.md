@@ -53,18 +53,18 @@ Tone Calibration (non-blocking, flag for creative director).
 ---
 
 ## Continuity Ledger open items
-- **CR-1 (Natsume reveal timing):** OPEN. Plan assumes male-public throughout (female voice only at
-  S3-07 private blow-up), matching primary text. BLOCKING for final screen lock if an early-reveal
-  adaptation is chosen — resolution required before Stage 17 export sign-off.
+- **CR-1 (Natsume reveal timing):** **RESOLVED 2026-07-10.** Creative-direction DECISION LOCKED:
+  adapt LN primary continuity — Natsume male-public ("Natsume-kun", he/him) in ALL public Vol.2
+  scenes; true (female) voice surfaces ONLY at the private S3-07 blow-up, exactly as primary text.
+  No early/anime-style public reveal. All stages already complied; no rework needed.
 - **CR-2 (Kon/Hishamaru):** LOCKED-OUT of Vol.2; fake "Kakugyouki" explicitly manmade (S5-05). ✓
 - **CR-5 (Agency HQ = Akihabara):** INFERRED; acceptable for BG, not used as primary Vol.2 loc. ✓
 - **CR-6 (Ch.4 title):** RESOLVED ("Kodoku"). ✓
 
 ## Blocking summary
 - All four BLOCKING checks PASS. **Pipeline is canon-safe to propagate.**
-- Only OPEN item = CR-1 (creative-direction decision), which is a content/adaptation call, not a
-  QC failure.
+- All prior OPEN items now RESOLVED. No remaining blockers.
 
 ## Final verdict
-**APPROVED FOR EXPORT pending CR-1 sign-off.** All downstream assets may be versioned per naming
-convention (Stage 17). Re-audit required only if CR-1 is changed or new Vol.2 text surfaces.
+**APPROVED FOR EXPORT.** All downstream assets versioned per naming convention (Stage 17).
+Re-audit required only if CR-1 is later changed or new Vol.2 text surfaces.
