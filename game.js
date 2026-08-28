@@ -13,10 +13,14 @@
   const endScreen = document.getElementById("end-screen");
   const nameInput = document.getElementById("name-input");
   const nameInput2 = document.getElementById("name-input-2");
+  const serverInput = document.getElementById("server-input");
   const play1pBtn = document.getElementById("play-1p");
   const play2pBtn = document.getElementById("play-2p");
+  const playOnlineBtn = document.getElementById("play-online");
   const restartBtn = document.getElementById("restart-btn");
   const endMessageEl = document.getElementById("end-message");
+  const respawnEl = document.getElementById("respawn-overlay");
+  const statusEl = document.getElementById("conn-status");
 
   let view = { w: 0, h: 0, scale: 1 };
   let camera = { x: 0, y: 0 };
@@ -33,13 +37,26 @@
   const joy = { p1: { x: 0, y: 0 }, p2: { x: 0, y: 0 } };
   const joyOrigin = { p1: null, p2: null };
 
+  const net = {
+    ws: null,
+    id: null,
+    connected: false,
+    blobs: new Map(),
+    foods: [],
+    self: null,
+    predicted: { x: 0, y: 0 },
+    predInit: false,
+    lastSent: 0,
+  };
+
   const rand = (min, max) => Math.random() * (max - min) + min;
   const randColor = () => `hsl(${Math.floor(rand(0, 360))}, 70%, 60%)`;
+  const massToRadius = (mass) => Math.max(12, Math.sqrt(mass) * 4);
+  const speedFor = (mass) => 3.2 * Math.pow(30 / (mass + 30), 0.4);
 
-  function massToRadius(mass) {
-    return Math.max(12, Math.sqrt(mass) * 4);
-  }
-
+  // ===================================================================
+  // Offline simulation (1 Player / 2 Players Local)
+  // ===================================================================
   class Blob {
     constructor(x, y, mass, color, name, isPlayer = false) {
       this.x = x;
@@ -61,7 +78,7 @@
 
     update() {
       const r = this.radius;
-      const baseSpeed = 3.2 * Math.pow(30 / (this.mass + 30), 0.4);
+      const baseSpeed = speedFor(this.mass);
       if (this.isPlayer) {
         const inp = this.input || { x: 0, y: 0 };
         const m = Math.hypot(inp.x, inp.y);
@@ -110,9 +127,7 @@
         const d = Math.hypot(other.x - this.x, other.y - this.y);
         if (d > 600) continue;
         if (other.mass > this.mass * 1.15) {
-          if (!threat || d < Math.hypot(threat.x - this.x, threat.y - this.y)) {
-            threat = other;
-          }
+          if (!threat || d < Math.hypot(threat.x - this.x, threat.y - this.y)) threat = other;
         } else if (this.mass > other.mass * 1.15) {
           if (d < bestPreyDist) {
             prey = other;
@@ -131,9 +146,13 @@
     }
 
     draw() {
+      this._draw(this.x, this.y);
+    }
+
+    _draw(bx, by) {
       const r = this.radius;
-      const sx = this.x - camera.x;
-      const sy = this.y - camera.y;
+      const sx = bx - camera.x;
+      const sy = by - camera.y;
       if (this.isPlayer) {
         ctx.beginPath();
         ctx.arc(sx, sy, r + 4, 0, Math.PI * 2);
@@ -162,11 +181,7 @@
   }
 
   function spawnFood() {
-    return {
-      x: rand(0, world.w),
-      y: rand(0, world.h),
-      color: randColor(),
-    };
+    return { x: rand(0, world.w), y: rand(0, world.h), color: randColor() };
   }
 
   function init(botCount, foodCount) {
@@ -203,6 +218,14 @@
     return p;
   }
 
+  function onPlayerDeath(dead) {
+    if (dead.isPlayer) dead.alive = false;
+  }
+
+  function removeBlob(index) {
+    blobs.splice(index, 1);
+  }
+
   function handleCollisions() {
     for (let i = blobs.length - 1; i >= 0; i--) {
       const a = blobs[i];
@@ -235,23 +258,16 @@
     }
   }
 
-  function onPlayerDeath(dead) {
-    if (dead.isPlayer) dead.alive = false;
-  }
-
-  function removeBlob(index) {
-    blobs.splice(index, 1);
-  }
-
   function eatFood() {
     for (let i = blobs.length - 1; i >= 0; i--) {
       const blob = blobs[i];
       const r = blob.radius;
+      const r2 = r * r;
       for (let f = foods.length - 1; f >= 0; f--) {
         const food = foods[f];
         const dx = food.x - blob.x;
         const dy = food.y - blob.y;
-        if (dx * dx + dy * dy < r * r) {
+        if (dx * dx + dy * dy < r2) {
           blob.mass += 1;
           foods.splice(f, 1);
           foods.push(spawnFood());
@@ -260,7 +276,7 @@
     }
   }
 
-  function updateCamera() {
+  function updateCameraOffline() {
     if (!players.length) return;
     const alive = players.filter((p) => p.alive);
     const list = alive.length ? alive : players;
@@ -295,12 +311,330 @@
     }
   }
 
+  function drivePlayerInputs() {
+    if (mode === "single") {
+      const p = players[0];
+      if (p && p.alive) {
+        const dx = mouse.x - view.w / 2;
+        const dy = mouse.y - view.h / 2;
+        const m = Math.hypot(dx, dy);
+        p.input = m > 1 ? { x: dx / m, y: dy / m } : { x: 0, y: 0 };
+      }
+    } else {
+      if (players[0] && players[0].alive) players[0].input = { x: joy.p1.x, y: joy.p1.y };
+      if (players[1] && players[1].alive) players[1].input = { x: joy.p2.x, y: joy.p2.y };
+    }
+  }
+
+  function loopOffline() {
+    if (!running) return;
+
+    drivePlayerInputs();
+    for (const blob of blobs) blob.update();
+    eatFood();
+    handleCollisions();
+    if (!running) return;
+
+    updateCameraOffline();
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, view.w, view.h);
+    drawGrid();
+    drawFood(foods);
+    const sorted = [...blobs].sort((a, b) => a.mass - b.mass);
+    for (const blob of sorted) blob.draw();
+    drawJoysticks();
+
+    if (mode === "local2p") {
+      scoreEl.textContent = players
+        .filter((p) => p.alive)
+        .map((p) => `${p.name}: ${Math.floor(p.mass)}`)
+        .join("    ");
+    } else if (player) {
+      scoreEl.textContent = `Mass: ${Math.floor(player.mass)}`;
+    }
+    updateLeaderboard();
+    animationId = requestAnimationFrame(loopOffline);
+  }
+
+  function startGame(selectedMode) {
+    mode = selectedMode;
+    if (mode === "local2p") {
+      world = { w: 2200, h: 2200 };
+      var botCount = 10;
+      var foodCount = 350;
+    } else {
+      world = { w: 4000, h: 4000 };
+      var botCount = 18;
+      var foodCount = 600;
+    }
+
+    players = [];
+    player = null;
+    init(botCount, foodCount);
+
+    const p1name = (nameInput.value || "Player 1").trim().slice(0, 16) || "Player 1";
+    addPlayer(p1name, "#ffd369");
+    if (mode === "local2p") {
+      const p2name = (nameInput2.value || "Player 2").trim().slice(0, 16) || "Player 2";
+      addPlayer(p2name, "#ff5d8f");
+      joy.p1 = { x: 0, y: 0 };
+      joy.p2 = { x: 0, y: 0 };
+    }
+
+    camera = { x: world.w / 2 - view.w / 2, y: world.h / 2 - view.h / 2 };
+    view.scale = 1;
+    startScreen.classList.add("hidden");
+    endScreen.classList.add("hidden");
+    respawnEl.classList.add("hidden");
+    running = true;
+    cancelAnimationFrame(animationId);
+    loopOffline();
+  }
+
+  // ===================================================================
+  // Online multiplayer
+  // ===================================================================
+  function normalizeWs(url) {
+    url = (url || "").trim();
+    if (!url) return null;
+    if (url.startsWith("http://")) return "ws://" + url.slice(7);
+    if (url.startsWith("https://")) return "wss://" + url.slice(8);
+    if (url.startsWith("ws://") || url.startsWith("wss://")) return url;
+    return "ws://" + url;
+  }
+
+  function setStatus(text, ok) {
+    if (!statusEl) return;
+    statusEl.textContent = text;
+    statusEl.style.color = ok ? "#7CFC9B" : "#ff9b9b";
+  }
+
+  function playOnline() {
+    const raw = (serverInput.value || "").trim();
+    if (!raw) {
+      setStatus("Enter a server URL (e.g. http://192.168.1.20:3000)", false);
+      return;
+    }
+    if (raw.startsWith("http://") || raw.startsWith("https://")) {
+      // Navigate the WebView/browser to the server's page, which auto-joins.
+      window.location.href = raw;
+      return;
+    }
+    startOnline(normalizeWs(raw));
+  }
+
+  function startOnline(url) {
+    url = url || normalizeWs(serverInput.value);
+    if (!url) {
+      setStatus("Enter a server URL", false);
+      return;
+    }
+    mode = "online";
+    setStatus("Connecting…", false);
+    const name = (nameInput.value || "Player" + Math.floor(rand(1, 999))).trim().slice(0, 16) || "Player";
+    net.id = null;
+    net.connected = false;
+    net.blobs = new Map();
+    net.foods = [];
+    net.self = null;
+    net.predicted = { x: 0, y: 0 };
+    net.predInit = false;
+
+    let ws;
+    try {
+      ws = new WebSocket(url);
+    } catch (e) {
+      setStatus("Invalid server URL", false);
+      return;
+    }
+    net.ws = ws;
+
+    ws.onopen = () => {
+      net.connected = true;
+      setStatus("Connected", true);
+      ws.send(JSON.stringify({ type: "join", name, color: randColor() }));
+    };
+    ws.onmessage = (ev) => {
+      let d;
+      try {
+        d = JSON.parse(ev.data);
+      } catch {
+        return;
+      }
+      if (d.type === "welcome") {
+        net.id = d.id;
+        world = d.world || world;
+        camera = { x: world.w / 2 - view.w / 2, y: world.h / 2 - view.h / 2 };
+        view.scale = 1;
+        startScreen.classList.add("hidden");
+        endScreen.classList.add("hidden");
+        running = true;
+        cancelAnimationFrame(animationId);
+        loopOnline();
+      } else if (d.type === "state") {
+        applyState(d);
+      }
+    };
+    ws.onclose = () => {
+      net.connected = false;
+      running = false;
+      setStatus("Disconnected", false);
+      startScreen.classList.remove("hidden");
+      respawnEl.classList.add("hidden");
+    };
+    ws.onerror = () => {
+      setStatus("Connection error", false);
+    };
+  }
+
+  function applyState(d) {
+    net.foods = d.foods || [];
+    if (d.world) world = d.world;
+    const map = new Map();
+    for (const b of d.blobs) {
+      const prev = net.blobs.get(b.id);
+      const rx = prev ? prev.rx : b.x;
+      const ry = prev ? prev.ry : b.y;
+      map.set(b.id, Object.assign({}, b, { rx, ry }));
+    }
+    net.blobs = map;
+
+    if (net.id != null) {
+      const self = map.get(net.id);
+      net.self = self || null;
+      if (self && self.a && !net.predInit) {
+        net.predicted.x = self.x;
+        net.predicted.y = self.y;
+        net.predInit = true;
+      }
+    }
+  }
+
+  function currentInputVector() {
+    const dx = mouse.x - view.w / 2;
+    const dy = mouse.y - view.h / 2;
+    const m = Math.hypot(dx, dy);
+    return m > 1 ? { x: dx / m, y: dy / m } : { x: 0, y: 0 };
+  }
+
+  function loopOnline() {
+    if (!running) return;
+
+    const inp = currentInputVector();
+    const now = performance.now();
+    if (net.connected && net.ws && net.ws.readyState === WebSocket.OPEN && now - net.lastSent > 50) {
+      net.lastSent = now;
+      net.ws.send(JSON.stringify({ type: "input", x: inp.x, y: inp.y }));
+    }
+
+    // Client-side prediction for own blob, corrected toward server.
+    if (net.self && net.self.a) {
+      const sp = Math.min(speedFor(net.self.m), speedFor(net.self.m) * Math.min(1, Math.hypot(inp.x, inp.y)));
+      const m = Math.hypot(inp.x, inp.y);
+      if (m > 0.001) {
+        net.predicted.x += (inp.x / m) * sp;
+        net.predicted.y += (inp.y / m) * sp;
+      }
+      net.predicted.x += (net.self.x - net.predicted.x) * 0.25;
+      net.predicted.y += (net.self.y - net.predicted.y) * 0.25;
+      net.predicted.x = Math.max(0, Math.min(world.w, net.predicted.x));
+      net.predicted.y = Math.max(0, Math.min(world.h, net.predicted.y));
+    }
+
+    for (const b of net.blobs.values()) {
+      b.rx += (b.x - b.rx) * 0.4;
+      b.ry += (b.y - b.ry) * 0.4;
+    }
+
+    // Camera follows predicted self position.
+    if (net.self && net.self.a) {
+      const tx = net.predicted.x - view.w / 2;
+      const ty = net.predicted.y - view.h / 2;
+      camera.x += (tx - camera.x) * 0.15;
+      camera.y += (ty - camera.y) * 0.15;
+      const sc = Math.max(0.45, Math.min(1, 1 / Math.pow(net.self.m / 30, 0.25)));
+      view.scale += (sc - view.scale) * 0.1;
+    }
+
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.clearRect(0, 0, view.w, view.h);
+    drawGrid();
+    drawFood(net.foods);
+    drawOnlineBlobs();
+
+    if (net.self) scoreEl.textContent = `Mass: ${Math.floor(net.self.m)}  •  Players: ${countHuman(net.blobs)}`;
+    updateOnlineLeaderboard();
+
+    if (net.self && !net.self.a) respawnEl.classList.remove("hidden");
+    else respawnEl.classList.add("hidden");
+
+    animationId = requestAnimationFrame(loopOnline);
+  }
+
+  function countHuman(map) {
+    let n = 0;
+    for (const b of map.values()) if (b.p) n++;
+    return n;
+  }
+
+  function drawOnlineBlobs() {
+    const s = view.scale || 1;
+    ctx.save();
+    ctx.scale(s, s);
+    const arr = [...net.blobs.values()].filter((b) => b.a).sort((a, b) => a.m - b.m);
+    for (const b of arr) {
+      const isSelf = b.id === net.id;
+      const bx = isSelf ? net.predicted.x : b.rx;
+      const by = isSelf ? net.predicted.y : b.ry;
+      const r = massToRadius(b.m);
+      const sx = bx - camera.x;
+      const sy = by - camera.y;
+      if (b.p) {
+        ctx.beginPath();
+        ctx.arc(sx, sy, r + 4, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(255,255,255,0.9)";
+        ctx.lineWidth = 3;
+        ctx.stroke();
+      }
+      ctx.beginPath();
+      ctx.arc(sx, sy, r, 0, Math.PI * 2);
+      ctx.fillStyle = b.c;
+      ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,0.35)";
+      ctx.beginPath();
+      ctx.arc(sx - r * 0.3, sy - r * 0.3, r * 0.25, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = "#fff";
+      ctx.font = `${Math.max(12, r * 0.4)}px Segoe UI, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "rgba(0,0,0,0.5)";
+      ctx.strokeText(b.n, sx, sy);
+      ctx.fillText(b.n, sx, sy);
+    }
+    ctx.restore();
+  }
+
+  function updateOnlineLeaderboard() {
+    const sorted = [...net.blobs.values()].filter((b) => b.a).sort((a, b) => b.m - a.m).slice(0, 10);
+    leaderboardList.innerHTML = "";
+    sorted.forEach((b) => {
+      const li = document.createElement("li");
+      if (b.id === net.id) li.classList.add("me");
+      li.innerHTML = `<span>${escapeHtml(b.n)}</span><span>${Math.floor(b.m)}</span>`;
+      leaderboardList.appendChild(li);
+    });
+  }
+
+  // ===================================================================
+  // Shared rendering helpers
+  // ===================================================================
   function drawGrid() {
     const s = view.scale || 1;
     ctx.save();
     ctx.scale(s, s);
-    const offX = -camera.x * s;
-    const offY = -camera.y * s;
     ctx.fillStyle = "#16213e";
     ctx.fillRect(0, 0, view.w / s + 2, view.h / s + 2);
     ctx.strokeStyle = "rgba(255,255,255,0.04)";
@@ -324,26 +658,20 @@
     ctx.restore();
   }
 
-  function drawFood() {
+  function drawFood(foodList) {
     const s = view.scale || 1;
     ctx.save();
     ctx.scale(s, s);
     ctx.translate(-camera.x, -camera.y);
-    for (const food of foods) {
+    for (const food of foodList) {
+      const fx = Array.isArray(food) ? food[0] : food.x;
+      const fy = Array.isArray(food) ? food[1] : food.y;
+      const fc = Array.isArray(food) ? food[2] : food.color;
       ctx.beginPath();
-      ctx.arc(food.x, food.y, FOOD_RADIUS, 0, Math.PI * 2);
-      ctx.fillStyle = food.color;
+      ctx.arc(fx, fy, FOOD_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = fc;
       ctx.fill();
     }
-    ctx.restore();
-  }
-
-  function drawBlobs() {
-    const s = view.scale || 1;
-    ctx.save();
-    ctx.scale(s, s);
-    const sorted = [...blobs].sort((a, b) => a.mass - b.mass);
-    for (const blob of sorted) blob.draw();
     ctx.restore();
   }
 
@@ -382,89 +710,9 @@
   }
 
   function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, (c) =>
+    return String(str).replace(/[&<>"']/g, (c) =>
       ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c])
     );
-  }
-
-  function drivePlayerInputs() {
-    if (mode === "single") {
-      const p = players[0];
-      if (p && p.alive) {
-        const dx = mouse.x - view.w / 2;
-        const dy = mouse.y - view.h / 2;
-        const m = Math.hypot(dx, dy);
-        p.input = m > 1 ? { x: dx / m, y: dy / m } : { x: 0, y: 0 };
-      }
-    } else {
-      if (players[0] && players[0].alive) players[0].input = { x: joy.p1.x, y: joy.p1.y };
-      if (players[1] && players[1].alive) players[1].input = { x: joy.p2.x, y: joy.p2.y };
-    }
-  }
-
-  function loop() {
-    if (!running) return;
-
-    drivePlayerInputs();
-    for (const blob of blobs) blob.update();
-    eatFood();
-    handleCollisions();
-    if (!running) return;
-
-    updateCamera();
-
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
-    ctx.clearRect(0, 0, view.w, view.h);
-    drawGrid();
-    drawFood();
-    drawBlobs();
-    drawJoysticks();
-
-    if (mode === "local2p") {
-      scoreEl.textContent = players
-        .filter((p) => p.alive)
-        .map((p) => `${p.name}: ${Math.floor(p.mass)}`)
-        .join("    ");
-    } else if (player) {
-      scoreEl.textContent = `Mass: ${Math.floor(player.mass)}`;
-    }
-    updateLeaderboard();
-
-    animationId = requestAnimationFrame(loop);
-  }
-
-  function startGame(selectedMode) {
-    mode = selectedMode;
-    if (mode === "local2p") {
-      world = { w: 2200, h: 2200 };
-      var botCount = 10;
-      var foodCount = 350;
-    } else {
-      world = { w: 4000, h: 4000 };
-      var botCount = 18;
-      var foodCount = 600;
-    }
-
-    players = [];
-    player = null;
-    init(botCount, foodCount);
-
-    const p1name = (nameInput.value || "Player 1").trim().slice(0, 16) || "Player 1";
-    addPlayer(p1name, "#ffd369");
-    if (mode === "local2p") {
-      const p2name = (nameInput2.value || "Player 2").trim().slice(0, 16) || "Player 2";
-      addPlayer(p2name, "#ff5d8f");
-      joy.p1 = { x: 0, y: 0 };
-      joy.p2 = { x: 0, y: 0 };
-    }
-
-    camera = { x: world.w / 2 - view.w / 2, y: world.h / 2 - view.h / 2 };
-    view.scale = 1;
-    startScreen.classList.add("hidden");
-    endScreen.classList.add("hidden");
-    running = true;
-    cancelAnimationFrame(animationId);
-    loop();
   }
 
   function endGame(winner) {
@@ -478,6 +726,9 @@
     endScreen.classList.remove("hidden");
   }
 
+  // ===================================================================
+  // Input wiring
+  // ===================================================================
   function resize() {
     view.w = window.innerWidth;
     view.h = window.innerHeight;
@@ -495,53 +746,51 @@
   });
 
   function onTouchStart(e) {
-    if (mode !== "local2p") {
+    if (mode === "local2p") {
+      for (const t of e.changedTouches) {
+        const side = t.clientX < view.w / 2 ? "p1" : "p2";
+        const o = joyOrigin[side];
+        let dx = t.clientX - o.x;
+        let dy = t.clientY - o.y;
+        const d = Math.hypot(dx, dy);
+        const R = 60;
+        if (d > R) {
+          dx = (dx / d) * R;
+          dy = (dy / d) * R;
+        }
+        joy[side].x = dx / R;
+        joy[side].y = dy / R;
+      }
+    } else {
       if (e.touches[0]) {
         mouse.x = e.touches[0].clientX;
         mouse.y = e.touches[0].clientY;
       }
-      e.preventDefault();
-      return;
-    }
-    for (const t of e.changedTouches) {
-      const side = t.clientX < view.w / 2 ? "p1" : "p2";
-      const o = joyOrigin[side];
-      let dx = t.clientX - o.x;
-      let dy = t.clientY - o.y;
-      const d = Math.hypot(dx, dy);
-      const R = 60;
-      if (d > R) {
-        dx = (dx / d) * R;
-        dy = (dy / d) * R;
-      }
-      joy[side].x = dx / R;
-      joy[side].y = dy / R;
     }
     e.preventDefault();
   }
 
   function onTouchMove(e) {
-    if (mode !== "local2p") {
+    if (mode === "local2p") {
+      for (const t of e.changedTouches) {
+        const side = t.clientX < view.w / 2 ? "p1" : "p2";
+        const o = joyOrigin[side];
+        let dx = t.clientX - o.x;
+        let dy = t.clientY - o.y;
+        const d = Math.hypot(dx, dy);
+        const R = 60;
+        if (d > R) {
+          dx = (dx / d) * R;
+          dy = (dy / d) * R;
+        }
+        joy[side].x = dx / R;
+        joy[side].y = dy / R;
+      }
+    } else {
       if (e.touches[0]) {
         mouse.x = e.touches[0].clientX;
         mouse.y = e.touches[0].clientY;
       }
-      e.preventDefault();
-      return;
-    }
-    for (const t of e.changedTouches) {
-      const side = t.clientX < view.w / 2 ? "p1" : "p2";
-      const o = joyOrigin[side];
-      let dx = t.clientX - o.x;
-      let dy = t.clientY - o.y;
-      const d = Math.hypot(dx, dy);
-      const R = 60;
-      if (d > R) {
-        dx = (dx / d) * R;
-        dy = (dy / d) * R;
-      }
-      joy[side].x = dx / R;
-      joy[side].y = dy / R;
     }
     e.preventDefault();
   }
@@ -562,16 +811,42 @@
 
   play1pBtn.addEventListener("click", () => startGame("single"));
   play2pBtn.addEventListener("click", () => startGame("local2p"));
+  playOnlineBtn.addEventListener("click", playOnline);
   nameInput.addEventListener("keydown", (e) => {
     if (e.key === "Enter") startGame("single");
   });
   nameInput2.addEventListener("keydown", (e) => {
     if (e.key === "Enter") startGame("local2p");
   });
+  serverInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") playOnline();
+  });
   restartBtn.addEventListener("click", () => {
     endScreen.classList.add("hidden");
     startScreen.classList.remove("hidden");
+    if (mode === "online" && net.ws) {
+      try {
+        net.ws.close();
+      } catch {}
+    }
   });
 
   resize();
+
+  // Allow the Android app (or any host) to connect the WebView automatically
+  // to a LAN server with no manual URL entry: window.blobzConnect("ws://host:3000").
+  window.blobzConnect = (url) => {
+    if (typeof url === "string" && url) {
+      serverInput.value = url;
+      startOnline(url);
+    }
+  };
+
+  // If this page is served by the game server (http/https), auto-join so
+  // opening the URL is immediately playable.
+  if (location.protocol.indexOf("http") === 0) {
+    const auto = "ws://" + location.host;
+    serverInput.value = auto;
+    startOnline(auto);
+  }
 })();

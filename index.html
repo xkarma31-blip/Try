@@ -21,15 +21,30 @@
     <div class="panel">
       <h1>Blobz<span>.io</span></h1>
       <p>Eat food and smaller blobs to grow. Avoid bigger blobs!</p>
-      <input id="name-input" type="text" maxlength="16" placeholder="Player 1 name" />
-      <input id="name-input-2" type="text" maxlength="16" placeholder="Player 2 name" />
+
+      <div class="name-row">
+        <input id="name-input" type="text" maxlength="16" placeholder="Your name" />
+      </div>
+
+      <div class="name-row">
+        <input id="name-input-2" type="text" maxlength="16" placeholder="Player 2 name (local 2P)" />
+      </div>
+
       <div class="mode-buttons">
         <button id="play-1p">1 Player</button>
         <button id="play-2p">2 Players (Local)</button>
+        <button id="play-online">Online / LAN</button>
       </div>
+
+      <div class="name-row">
+        <input id="server-input" type="text" maxlength="120" placeholder="Server URL (e.g. http://192.168.1.20:3000)" />
+      </div>
+      <p id="conn-status" class="status"></p>
+
       <p class="hint" id="start-hint">
-        1P: move the mouse (or drag) to steer. 2P Local: each player uses a
-        touch joystick on their half of the screen.
+        1P: move mouse / drag to steer. 2P Local: each player uses a touch joystick
+        on their half of the screen. Online/LAN: join a server on the same WiFi —
+        or host one in the Android app.
       </p>
     </div>
   </div>
@@ -39,6 +54,13 @@
       <h1>Game Over</h1>
       <p id="end-message"><span id="final-score">0</span></p>
       <button id="restart-btn">Play Again</button>
+    </div>
+  </div>
+
+  <div id="respawn-overlay" class="hidden">
+    <div class="panel">
+      <h1>Eaten!</h1>
+      <p>Respawning…</p>
     </div>
   </div>
 

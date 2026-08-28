@@ -1,51 +1,61 @@
-# Blobz.io — Android App (Local Multiplayer)
+# Blobz.io — Android App (Local-network / LAN multiplayer)
 
-A native Android wrapper (Kotlin + `WebView`) around the Blobz.io browser game,
-with a **local 2-player mode** so two people can play on the same phone/tablet.
+A native Android app (Kotlin + `WebView`) that plays **Blobz.io** with real
+**local-network multiplayer** — like Mini Militia, Special Forces Group 2, or
+Soul Knight. **No PC, no terminal, no internet required.** One phone *hosts* the
+game (the server runs inside the app); everyone else on the same WiFi joins
+automatically via mDNS/Zeroconf discovery.
 
-## What's inside
+## How to play (the whole point)
 
-- `app/src/main/assets/index.html`, `game.js`, `style.css` — the game (copied from the repo root).
-- `app/src/main/java/com/blobz/game/MainActivity.kt` — full-screen `WebView` that loads the game and keeps the screen awake / hides system UI for an immersive experience.
-- Gradle build files (`build.gradle`, `settings.gradle`, `app/build.gradle`).
+1. Make sure everyone is on the **same WiFi**.
+2. On one phone, open the app and tap **Host LAN Game**.
+   - That phone starts an in-app authoritative server and advertises it on the LAN.
+3. On every other phone, open the app and tap **Join LAN Game**.
+   - The app scans the WiFi, finds the host, and drops you straight into the
+     shared world. No URLs, no typing.
+4. (Optional) **Solo / Offline** runs the single-player + local-2P modes with no
+   network at all.
 
-## Gameplay
+The hosting phone also plays — it connects to its own server on `localhost`.
 
-| Mode | Players | Controls |
-|------|---------|----------|
-| **1 Player** | vs 18 bots | Mouse (desktop) or drag (mobile) to steer |
-| **2 Players (Local)** | 2 humans + 10 bots, same device | Each human uses a touch joystick on their half of the screen (left half = P1 gold, right half = P2 pink). Camera auto-frames both players. Last human blob standing wins. |
+## How it works
 
-The world, bots and food are shared; bigger blobs eat smaller ones. Touch joysticks appear at the bottom corners in 2P mode.
+- `GameServer.kt` — an authoritative game server written in Kotlin
+  (`org.java-websocket`), running **in the host app's process**. It simulates
+  the world (players + bots + food) on a ~30 Hz tick and broadcasts snapshots.
+- `MainActivity.kt` — full-screen `WebView` that loads the bundled client
+  (`assets/index.html`). For Host it starts `GameServer` and points the WebView
+  at `ws://127.0.0.1:3000`; for Join it uses Android `NsdManager` to discover
+  the `_blobz._tcp.` service and connects. The page exposes
+  `window.blobzConnect(url)` so the app can join with zero manual input.
+- `index.html` / `game.js` / `style.css` — the client. In online mode it sends
+  only your movement direction to the server and renders the snapshots it
+  receives (with light client-side prediction for your own blob).
 
 ## Building / running
 
-You need the **Android SDK** (Android Studio ≥ Hedgehog, or the command-line `gradle`).
+Open `android-app/` in **Android Studio** (Hedgehog+) and Run to a device or
+emulator. Requirements: `minSdk 21`, internet + WiFi multicast permissions
+(already declared). The app embeds everything; nothing to start separately.
 
-### Option A — Android Studio (easiest)
-1. Open this `android-app/` folder as a project.
-2. Let it sync Gradle.
-3. Plug in a device (or start an emulator) and click **Run ▶**.
+## Desktop / cross-play (optional, not required)
 
-### Option B — Command line
-1. Generate the Gradle wrapper if missing:
-   ```bash
-   gradle wrapper --gradle-version 8.5
-   ```
-2. Build the debug APK:
-   ```bash
-   ./gradlew assembleDebug
-   ```
-3. Install on a connected device:
-   ```bash
-   ./gradlew installDebug
-   # or: adb install app/build/outputs/apk/debug/app-debug.apk
-   ```
+For playing from a laptop browser, or to test without a phone, there is also a
+Node server (`server/index.js`) that speaks the exact same protocol:
+
+```bash
+npm install
+npm run server          # serves + simulates on http://localhost:3000 (LAN: http://<lan-ip>:3000)
+```
+
+Then open that URL in any browser, or point the app's manual server field at it.
+This is purely optional — the Android app is fully self-sufficient.
 
 ## Updating the game
 
-The assets in `app/src/main/assets/` are copies. After changing the game in the
-repo root, re-copy them:
+The client in `app/src/main/assets/` is a copy. After editing the repo-root
+`index.html` / `game.js` / `style.css`, re-copy:
 
 ```bash
 cp ../index.html ../game.js ../style.css app/src/main/assets/

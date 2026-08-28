@@ -153,6 +153,57 @@ body {
   background: #ff7aa6;
 }
 
+#play-online {
+  background: #4fb286;
+  flex: 1 0 100%;
+}
+
+#play-online:hover {
+  background: #62c79a;
+}
+
+#name-input-2 {
+  background: #14324f;
+}
+
+#server-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-size: 14px;
+  border-radius: 8px;
+  border: 2px solid #0f3460;
+  background: #0f3460;
+  color: #fff;
+  margin-bottom: 8px;
+  outline: none;
+}
+
+#server-input:focus {
+  border-color: #4fb286;
+}
+
+.status {
+  font-size: 13px;
+  min-height: 18px;
+  margin-bottom: 6px;
+  color: #8d8da3;
+}
+
+#respawn-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(10, 10, 25, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 9;
+}
+
+#respawn-overlay .panel h1 {
+  color: #ff8a8a;
+}
+
 button {
   padding: 12px 28px;
   font-size: 16px;
