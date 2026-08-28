@@ -8,16 +8,26 @@ automatically via mDNS/Zeroconf discovery.
 
 ## How to play (the whole point)
 
-1. Make sure everyone is on the **same WiFi**.
+1. Make sure everyone is on the **same WiFi** (or Wi-Fi Direct group).
 2. On one phone, open the app and tap **Host LAN Game**.
    - That phone starts an in-app authoritative server and advertises it on the LAN.
 3. On every other phone, open the app and tap **Join LAN Game**.
-   - The app scans the WiFi, finds the host, and drops you straight into the
-     shared world. No URLs, no typing.
+   - The app shows a **room list** of every Blobz game on the network, with live
+     player counts, and you tap the one to join. No URLs, no typing.
 4. (Optional) **Solo / Offline** runs the single-player + local-2P modes with no
    network at all.
 
 The hosting phone also plays — it connects to its own server on `localhost`.
+
+### No WiFi router? Use Wi-Fi Direct
+If there's no access point, use the **Host (Wi-Fi Direct)** / **Join (Wi-Fi Direct)**
+buttons instead. The host creates a Wi-Fi Direct group (becoming the Group Owner)
+and runs the server on it; the app tells you the network name/password. Joiners
+scan for the host peer, connect, and are then dropped into the same room list.
+Everything still runs on the devices — no internet, no PC.
+
+> Wi-Fi Direct needs the location / "Nearby devices" permission (requested on
+> first launch). Grant it when prompted or the scan won't find peers.
 
 ## How it works
 
@@ -27,8 +37,11 @@ The hosting phone also plays — it connects to its own server on `localhost`.
 - `MainActivity.kt` — full-screen `WebView` that loads the bundled client
   (`assets/index.html`). For Host it starts `GameServer` and points the WebView
   at `ws://127.0.0.1:3000`; for Join it uses Android `NsdManager` to discover
-  the `_blobz._tcp.` service and connects. The page exposes
-  `window.blobzConnect(url)` so the app can join with zero manual input.
+  the `_blobz._tcp.` service and shows a **room list** (with live player counts
+  from the advertised TXT record) — you tap a room to join. `Join (Wi-Fi Direct)`
+  uses `WifiP2pManager` to find the host peer, form a group, then reuse the same
+  NSD room list. The page exposes `window.blobzConnect(url)` so the app can join
+  with zero manual input.
 - `index.html` / `game.js` / `style.css` — the client. In online mode it sends
   only your movement direction to the server and renders the snapshots it
   receives (with light client-side prediction for your own blob).

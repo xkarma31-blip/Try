@@ -129,6 +129,9 @@ class GameServer(port: Int) : WebSocketServer(InetSocketAddress(port)) {
         }
     }
 
+    /** Live player count (used for the LAN room listing TXT record). */
+    fun activePlayerCount(): Int = players.size
+
     fun shutdown() {
         running = false
         try {
