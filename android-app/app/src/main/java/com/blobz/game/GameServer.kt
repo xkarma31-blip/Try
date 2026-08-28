@@ -139,13 +139,14 @@ class GameServer(port: Int) : WebSocketServer(InetSocketAddress(port)) {
         } catch (_: Exception) {
         }
         try {
-            close()
+            stop()
         } catch (_: Exception) {
         }
     }
 
     // ---- simulation ----
     private fun rand(a: Float, b: Float) = a + rng.nextFloat() * (b - a)
+    private fun rand(max: Float) = rand(0f, max)
     private fun randColor() = "hsl(${rng.nextInt(360)},70%,60%)"
     private fun clamp(v: Float, lo: Float, hi: Float) = max(lo, min(hi, v))
     private fun massToRadius(m: Float) = max(12f, Math.sqrt(m.toDouble()).toFloat() * 4f)

@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity() {
         mainButtons = LinearLayout(ctx).apply {
             orientation = LinearLayout.VERTICAL
         }
-        fun btn(label: String, color: Int, action: () -> Unit): Button {
+        fun btn(label: String, color: Int = 0xff2a9d8f.toInt(), action: () -> Unit): Button {
             return Button(ctx).apply {
                 text = label
                 setBackgroundColor(color)
@@ -472,7 +472,10 @@ class MainActivity : AppCompatActivity() {
             nsdManager?.unregisterService(registrationListener)
         } catch (_: Exception) {}
         try {
-            wifiP2pManager?.stopPeerDiscovery(p2pChannel)
+            wifiP2pManager?.stopPeerDiscovery(p2pChannel, object : WifiP2pManager.ActionListener {
+                override fun onSuccess() {}
+                override fun onFailure(reason: Int) {}
+            })
         } catch (_: Exception) {}
         p2pReceiver?.let { try { unregisterReceiver(it) } catch (_: Exception) {} }
         gameServer?.shutdown()

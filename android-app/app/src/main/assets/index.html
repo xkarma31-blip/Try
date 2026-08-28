@@ -2,65 +2,154 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
-  <title>Blobz.io</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <meta name="theme-color" content="#0a0a1a" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <title>Witch.io</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <canvas id="game"></canvas>
 
-  <div id="hud">
-    <div id="score">Mass: 0</div>
+  <!-- HUD -->
+  <div id="hud" class="hidden">
+    <div id="top-bar">
+      <div id="mass-display">
+        <span class="label">Power</span>
+        <span id="mass-value">0</span>
+      </div>
+      <div id="spell-slots">
+        <div class="spell-slot" id="spell-0"><span class="key">Q</span><span class="spell-icon">⚡</span></div>
+        <div class="spell-slot" id="spell-1"><span class="key">E</span><span class="spell-icon">🛡️</span></div>
+      </div>
+    </div>
+
     <div id="leaderboard">
-      <h3>Leaderboard</h3>
+      <h3>🧙 Coven</h3>
       <ol id="leaderboard-list"></ol>
+    </div>
+
+    <div id="minimap">
+      <canvas id="minimap-canvas" width="120" height="120"></canvas>
+    </div>
+
+    <div id="mobile-controls" class="hidden">
+      <div id="joystick-zone"></div>
+      <div id="spell-buttons">
+        <button id="spell-btn-0" class="spell-btn">⚡</button>
+        <button id="spell-btn-1" class="spell-btn">🛡️</button>
+      </div>
+    </div>
+
+    <div id="combo-display" class="hidden">
+      <span id="combo-text"></span>
     </div>
   </div>
 
+  <!-- Start Screen -->
   <div id="start-screen">
     <div class="panel">
-      <h1>Blobz<span>.io</span></h1>
-      <p>Eat food and smaller blobs to grow. Avoid bigger blobs!</p>
-
-      <div class="name-row">
-        <input id="name-input" type="text" maxlength="16" placeholder="Your name" />
+      <div class="logo">
+        <h1>Witch<span>.io</span></h1>
+        <div class="logo-icon">🧙‍♀️</div>
       </div>
+      <p class="tagline">Brew. Cast. Conquer.</p>
 
       <div class="name-row">
-        <input id="name-input-2" type="text" maxlength="16" placeholder="Player 2 name (local 2P)" />
+        <input id="name-input" type="text" maxlength="16" placeholder="Witch name..." autocomplete="off" />
       </div>
 
       <div class="mode-buttons">
-        <button id="play-1p">1 Player</button>
-        <button id="play-2p">2 Players (Local)</button>
-        <button id="play-online">Online / LAN</button>
+        <button id="play-solo" class="mode-btn solo">
+          <span class="icon">⚔️</span>
+          <span class="text">Solo</span>
+        </button>
+        <button id="play-duo" class="mode-btn duo">
+          <span class="icon">👥</span>
+          <span class="text">Local Duel</span>
+        </button>
+        <button id="play-online" class="mode-btn online">
+          <span class="icon">🌐</span>
+          <span class="text">Online</span>
+        </button>
       </div>
 
-      <div class="name-row">
-        <input id="server-input" type="text" maxlength="120" placeholder="Server URL (e.g. http://192.168.1.20:3000)" />
+      <div id="online-options" class="hidden">
+        <div class="name-row">
+          <input id="name-input-2" type="text" maxlength="16" placeholder="Player 2 name..." autocomplete="off" />
+        </div>
+        <div class="name-row">
+          <input id="server-input" type="text" maxlength="120" placeholder="Server URL (ws://...)" autocomplete="off" />
+        </div>
+        <p id="conn-status" class="status"></p>
       </div>
-      <p id="conn-status" class="status"></p>
 
-      <p class="hint" id="start-hint">
-        1P: move mouse / drag to steer. 2P Local: each player uses a touch joystick
-        on their half of the screen. Online/LAN: join a server on the same WiFi —
-        or host one in the Android app.
-      </p>
+      <div class="difficulty-row">
+        <label>Bot Difficulty:</label>
+        <div class="difficulty-buttons">
+          <button class="diff-btn active" data-diff="easy">Easy</button>
+          <button class="diff-btn" data-diff="medium">Medium</button>
+          <button class="diff-btn" data-diff="hard">Hard</button>
+        </div>
+      </div>
+
+      <div class="controls-help">
+        <div class="help-section">
+          <h4>🖥️ Desktop</h4>
+          <p>Mouse to move • Q/E or click spells • Space to dash</p>
+        </div>
+        <div class="help-section">
+          <h4>📱 Mobile</h4>
+          <p>Left side: joystick • Right side: tap spells • Pinch to zoom</p>
+        </div>
+      </div>
+
+      <div class="spell-preview">
+        <h4>✨ Spells</h4>
+        <div class="spell-list">
+          <div class="spell-item"><span>⚡</span><div><strong>Surge</strong><small>Speed boost</small></div></div>
+          <div class="spell-item"><span>🛡️</span><div><strong>Ward</strong><small>Shield</small></div></div>
+          <div class="spell-item"><span>🧲</span><div><strong>Magnet</strong><small>Attract mana</small></div></div>
+          <div class="spell-item"><span>💨</span><div><strong>Dash</strong><small>Burst of speed</small></div></div>
+          <div class="spell-item"><span>🔮</span><div><strong>Vanish</strong><small>Invisibility</small></div></div>
+          <div class="spell-item"><span>💣</span><div><strong>Blast</strong><small>Push enemies</small></div></div>
+        </div>
+      </div>
     </div>
   </div>
 
+  <!-- End Screen -->
   <div id="end-screen" class="hidden">
     <div class="panel">
-      <h1>Game Over</h1>
-      <p id="end-message"><span id="final-score">0</span></p>
-      <button id="restart-btn">Play Again</button>
+      <div class="end-icon">💀</div>
+      <h1>Consumed!</h1>
+      <p id="end-message">You reached a power level of <span id="final-score">0</span></p>
+      <div id="end-stats">
+        <div class="stat"><span id="stat-time">0:00</span><label>Time</label></div>
+        <div class="stat"><span id="stat-eaten">0</span><label>Eaten</label></div>
+        <div class="stat"><span id="stat-spells">0</span><label>Spells</label></div>
+        <div class="stat"><span id="stat-max">0</span><label>Max Power</label></div>
+      </div>
+      <button id="restart-btn">Cast Again ✨</button>
     </div>
   </div>
 
+  <!-- Respawn Overlay -->
   <div id="respawn-overlay" class="hidden">
     <div class="panel">
-      <h1>Eaten!</h1>
-      <p>Respawning…</p>
+      <div class="respawn-icon">🌀</div>
+      <h1>Returning…</h1>
+      <div class="respawn-bar"><div id="respawn-progress"></div></div>
+    </div>
+  </div>
+
+  <!-- Pause Menu -->
+  <div id="pause-menu" class="hidden">
+    <div class="panel">
+      <h2>⏸️ Paused</h2>
+      <button id="resume-btn">Resume</button>
+      <button id="quit-btn" class="secondary">Quit</button>
     </div>
   </div>
 
