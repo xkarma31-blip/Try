@@ -1,4 +1,4 @@
-package com.blobz.game
+package io.witch.game
 
 import android.content.BroadcastReceiver
 import android.content.Context
@@ -129,7 +129,7 @@ class MainActivity : AppCompatActivity() {
             setPadding(40, 40, 40, 40)
         }
         val title = TextView(ctx).apply {
-            text = "Blobz.io"
+            text = "Witch.io"
             textSize = 34f
             setTextColor(0xffffffff.toInt())
             gravity = Gravity.CENTER
@@ -286,7 +286,7 @@ class MainActivity : AppCompatActivity() {
         registerHostService()
         wifiP2pManager?.createGroup(p2pChannel, object : WifiP2pManager.ActionListener {
             override fun onSuccess() {
-                setStatus("Wi-Fi Direct room ready. Friends: open Wi-Fi, join the 'Blobz' network, then Join (Wi-Fi Direct).")
+                setStatus("Wi-Fi Direct room ready. Friends: open Wi-Fi, join the 'Witch' network, then Join (Wi-Fi Direct).")
                 wifiP2pManager?.requestGroupInfo(p2pChannel) { group ->
                     group?.let {
                         setStatus("Join Wi-Fi network '${it.networkName}' (pass: ${it.passphrase}). Then tap Join (Wi-Fi Direct).")
@@ -310,14 +310,14 @@ class MainActivity : AppCompatActivity() {
     private fun registerHostService() {
         try {
             val info = NsdServiceInfo().apply {
-                serviceName = "Blobz"
-                serviceType = "_blobz._tcp."
+                serviceName = "Witch"
+                serviceType = "_witch._tcp."
                 port = SERVER_PORT
                 setAttribute("players", (gameServer?.activePlayerCount() ?: 1).toString())
             }
             nsdManager?.registerService(info, NsdManager.PROTOCOL_DNS_SD, registrationListener)
         } catch (e: Exception) {
-            Log.w("Blobz", "NSD register failed: ${e.message}")
+            Log.w("Witch", "NSD register failed: ${e.message}")
         }
         // Keep the advertised player count fresh.
         handler.removeCallbacks(roomAttrTask)
@@ -330,10 +330,10 @@ class MainActivity : AppCompatActivity() {
             try {
                 nsdManager?.unregisterService(registrationListener)
                 val info = NsdServiceInfo().apply {
-                    serviceName = "Blobz"
-                    serviceType = "_blobz._tcp."
-                    port = SERVER_PORT
-                    setAttribute("players", count.toString())
+                serviceName = "Witch"
+                serviceType = "_witch._tcp."
+                port = SERVER_PORT
+                setAttribute("players", count.toString())
                 }
                 nsdManager?.registerService(info, NsdManager.PROTOCOL_DNS_SD, registrationListener)
             } catch (_: Exception) {
@@ -347,7 +347,7 @@ class MainActivity : AppCompatActivity() {
             setStatus("Hosting — friends on this network can join!")
         }
         override fun onRegistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-            Log.w("Blobz", "register failed $errorCode")
+            Log.w("Witch", "register failed $errorCode")
         }
         override fun onServiceUnregistered(serviceInfo: NsdServiceInfo) {}
         override fun onUnregistrationFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {}
@@ -358,7 +358,7 @@ class MainActivity : AppCompatActivity() {
         rooms.clear(); renderRooms()
         showRooms("Scanning for a LAN game…")
         try {
-            nsdManager?.discoverServices("_blobz._tcp.", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
+            nsdManager?.discoverServices("_witch._tcp.", NsdManager.PROTOCOL_DNS_SD, discoveryListener)
         } catch (e: Exception) {
             setStatus("Could not scan: ${e.message}")
         }
@@ -366,12 +366,12 @@ class MainActivity : AppCompatActivity() {
 
     private val resolveListener = object : NsdManager.ResolveListener {
         override fun onResolveFailed(serviceInfo: NsdServiceInfo, errorCode: Int) {
-            Log.w("Blobz", "resolve failed $errorCode")
+            Log.w("Witch", "resolve failed $errorCode")
         }
         override fun onServiceResolved(serviceInfo: NsdServiceInfo) {
             val host = serviceInfo.host ?: return
             val players = serviceInfo.attributes["players"]?.let { String(it).toIntOrNull() } ?: 0
-            addRoom(serviceInfo.serviceName ?: "Blobz", host.hostAddress ?: return, serviceInfo.port, players)
+            addRoom(serviceInfo.serviceName ?: "Witch", host.hostAddress ?: return, serviceInfo.port, players)
         }
     }
 
@@ -379,7 +379,7 @@ class MainActivity : AppCompatActivity() {
         override fun onDiscoveryStarted(regType: String) {}
         override fun onDiscoveryStopped(serviceType: String) {}
         override fun onServiceFound(service: NsdServiceInfo) {
-            if (service.serviceType?.contains("blobz") == true) {
+            if (service.serviceType?.contains("witch") == true) {
                 nsdManager?.resolveService(service, resolveListener)
             }
         }
@@ -410,7 +410,7 @@ class MainActivity : AppCompatActivity() {
             wifiP2pManager = getSystemService(Context.WIFI_P2P_SERVICE) as WifiP2pManager
             p2pChannel = wifiP2pManager?.initialize(this, mainLooper, null)
         } catch (e: Exception) {
-            Log.w("Blobz", "Wi-Fi Direct unavailable: ${e.message}")
+            Log.w("Witch", "Wi-Fi Direct unavailable: ${e.message}")
         }
         p2pReceiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context?, intent: Intent?) {
@@ -455,7 +455,7 @@ class MainActivity : AppCompatActivity() {
 
     // ---------------- WebView bridge ----------------
     private fun connectWebView(url: String) {
-        val js = "window.blobzConnect && window.blobzConnect('$url');"
+        val js = "window.witchConnect && window.witchConnect('$url');"
         if (pageReady) {
             webView.evaluateJavascript(js, null)
         } else {

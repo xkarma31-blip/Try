@@ -20,8 +20,12 @@
         <span id="mass-value">0</span>
       </div>
       <div id="spell-slots">
-        <div class="spell-slot" id="spell-0"><span class="key">Q</span><span class="spell-icon">⚡</span></div>
-        <div class="spell-slot" id="spell-1"><span class="key">E</span><span class="spell-icon">🛡️</span></div>
+        <div class="spell-slot" data-key="surge"><span class="key">Q</span><span class="spell-icon">⚡</span></div>
+        <div class="spell-slot" data-key="ward"><span class="key">E</span><span class="spell-icon">🛡️</span></div>
+        <div class="spell-slot" data-key="magnet"><span class="key">R</span><span class="spell-icon">🧲</span></div>
+        <div class="spell-slot" data-key="dash"><span class="key">Space</span><span class="spell-icon">💨</span></div>
+        <div class="spell-slot" data-key="vanish"><span class="key">V</span><span class="spell-icon">🔮</span></div>
+        <div class="spell-slot" data-key="blast"><span class="key">F</span><span class="spell-icon">💣</span></div>
       </div>
     </div>
 
@@ -37,8 +41,12 @@
     <div id="mobile-controls" class="hidden">
       <div id="joystick-zone"></div>
       <div id="spell-buttons">
-        <button id="spell-btn-0" class="spell-btn">⚡</button>
-        <button id="spell-btn-1" class="spell-btn">🛡️</button>
+        <button class="spell-btn" data-key="surge">⚡</button>
+        <button class="spell-btn" data-key="ward">🛡️</button>
+        <button class="spell-btn" data-key="magnet">🧲</button>
+        <button class="spell-btn" data-key="dash">💨</button>
+        <button class="spell-btn" data-key="vanish">🔮</button>
+        <button class="spell-btn" data-key="blast">💣</button>
       </div>
     </div>
 
@@ -82,6 +90,7 @@
         <div class="name-row">
           <input id="server-input" type="text" maxlength="120" placeholder="Server URL (ws://...)" autocomplete="off" />
         </div>
+        <button id="connect-online-btn" class="mode-btn online"><span class="icon">🔗</span><span class="text">Connect</span></button>
         <p id="conn-status" class="status"></p>
       </div>
 

@@ -12,7 +12,7 @@
 
     <application
         android:allowBackup="true"
-        android:label="Blobz.io"
+        android:label="Witch.io"
         android:supportsRtl="true"
         android:usesCleartextTraffic="true"
         android:hardwareAccelerated="true">
@@ -22,7 +22,7 @@
             android:exported="true"
             android:screenOrientation="fullSensor"
             android:configChanges="orientation|screenSize|keyboardHidden"
-            android:theme="@style/Theme.Blobz">
+            android:theme="@style/Theme.Witch">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

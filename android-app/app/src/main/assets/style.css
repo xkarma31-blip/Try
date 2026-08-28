@@ -82,6 +82,25 @@ html, body {
   justify-content: center;
   backdrop-filter: blur(8px);
   transition: all 0.15s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.spell-slot.active {
+  border-color: #d4b8ff;
+  box-shadow: 0 0 18px rgba(180, 120, 255, 0.6);
+}
+
+.spell-slot::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: var(--cd, 0%);
+  background: rgba(10, 10, 26, 0.7);
+  transition: height 0.1s linear;
+  pointer-events: none;
 }
 
 .spell-slot:active {
@@ -171,49 +190,35 @@ html, body {
 
 #joystick-zone {
   position: absolute;
-  bottom: 40px;
-  left: 40px;
-  width: 120px;
-  height: 120px;
-  background: rgba(180, 120, 255, 0.1);
-  border: 2px solid rgba(180, 120, 255, 0.3);
-  border-radius: 50%;
-  pointer-events: auto;
-}
-
-#joystick-zone::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 50px;
-  height: 50px;
-  background: rgba(180, 120, 255, 0.4);
-  border-radius: 50%;
+  inset: 0;
+  pointer-events: none;
 }
 
 #spell-buttons {
   position: absolute;
-  bottom: 40px;
-  right: 40px;
+  bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+  right: calc(20px + env(safe-area-inset-right, 0px));
   display: flex;
-  gap: 16px;
+  flex-wrap: wrap;
+  gap: 10px;
+  max-width: 200px;
+  justify-content: flex-end;
   pointer-events: auto;
 }
 
 .spell-btn {
-  width: 64px;
-  height: 64px;
+  width: 56px;
+  height: 56px;
   border-radius: 50%;
   background: rgba(20, 10, 40, 0.9);
   border: 2px solid rgba(180, 120, 255, 0.5);
-  font-size: 28px;
+  font-size: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transition: all 0.1s ease;
+  touch-action: manipulation;
 }
 
 .spell-btn:active {
@@ -243,6 +248,24 @@ html, body {
 }
 
 /* ========== Overlays ========== */
+#start-screen,
+#end-screen,
+#respawn-overlay,
+#pause-menu {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 5, 20, 0.85);
+  backdrop-filter: blur(6px);
+}
+
+#start-screen {
+  background: radial-gradient(ellipse at center, #1a1a3a 0%, #0a0a1a 100%);
+}
+
 .overlay {
   position: fixed;
   inset: 0;

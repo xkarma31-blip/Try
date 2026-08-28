@@ -1,6 +1,9 @@
 /**
- * Witch.io — a magical .io arena game
- * Features: spells, dash, mobile joystick, minimap, combos, difficulty levels
+ * Witch.io — a magical .io arena game (mobile-first)
+ * - Authoritative-sim for Solo / Local Duel
+ * - Real-time net mode over the in-app GameServer (LAN / Wi-Fi Direct)
+ * - Floating virtual joystick (Pointer Events), 6-spell mobile bar,
+ *   DPR-crisp canvas, camera zoom, screen shake, eat popups.
  */
 (() => {
   "use strict";
@@ -15,7 +18,6 @@
     botCount: { easy: 12, medium: 18, hard: 25 },
     foodCount: { easy: 400, medium: 600, hard: 800 },
     tickRate: 60,
-    spellCooldowns: { surge: 8000, ward: 12000, magnet: 10000, dash: 3000, vanish: 15000, blast: 10000 },
   };
 
   const SPELLS = {
@@ -26,10 +28,12 @@
     vanish: { name: "Vanish", icon: "🔮", cooldown: 15000, dur: 3000 },
     blast:  { name: "Blast",  icon: "💣", cooldown: 10000, dur: 0    },
   };
+  const SPELL_ORDER = ["surge", "ward", "magnet", "dash", "vanish", "blast"];
 
   // ============================================================
   // STATE
   // ============================================================
+  const isTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
   let world = { ...CONFIG.world };
   let difficulty = "easy";
   let mode = "single";
@@ -38,20 +42,20 @@
 
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
+  let dpr = Math.min(window.devicePixelRatio || 1, 2.5);
 
-  let view = { w: 0, h: 0, scale: 1, targetScale: 1 };
+  let view = { w: 0, h: 0, scale: 1, targetScale: 1, userZoom: 1 };
   let camera = { x: 0, y: 0 };
-  const mouse = { x: 0, y: 0, down: false };
+  let shake = 0;
+  const mouse = { x: 0, y: 0 };
 
   let foods = [];
   let blobs = [];
   let players = [];
   let player = null;
-  let effects = [];
   let particles = [];
-
-  const joy = { p1: { x: 0, y: 0 }, p2: { x: 0, y: 0 } };
-  const joyOrigin = { p1: null, p2: null };
+  let popups = [];
+  let trails = [];
 
   let combo = 0;
   let comboTimer = 0;
@@ -66,59 +70,55 @@
   let animationId = null;
   let lastTime = 0;
 
+  // ---- Floating joystick (Pointer Events) ----
+  const joy = {
+    active: false, id: null, ox: 0, oy: 0, x: 0, y: 0,
+    maxR: 70, dead: 12,
+    vector: { x: 0, y: 0 },
+  };
+  // pointers for pinch-zoom
+  const pointers = new Map();
+
+  // ---- Net mode ----
   const net = {
     ws: null, id: null, connected: false,
-    blobs: new Map(), foods: [],
-    self: null, predicted: { x: 0, y: 0 }, predInit: false, lastSent: 0,
+    byId: new Map(), foods: [], world: null,
+    lastSent: 0, self: null,
   };
 
   // ============================================================
   // UTILITIES
   // ============================================================
   const rand = (min, max) => Math.random() * (max - min) + min;
-  const randColor = () => `hsl(${Math.floor(rand(240, 320))}, 70%, 60%)`;
+  const randColor = () => `hsl(${Math.floor(rand(250, 320))}, 70%, 62%)`;
   const massToRadius = (mass) => Math.max(14, Math.sqrt(mass) * 5);
   const speedFor = (mass) => 3.6 * Math.pow(30 / (mass + 30), 0.4);
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-
   const lerp = (a, b, t) => a + (b - a) * t;
   const clamp = (v, min, max) => Math.max(min, Math.min(max, v));
+  const $ = (id) => document.getElementById(id);
 
   function escapeHtml(str) {
     return String(str).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
   }
 
   // ============================================================
-  // SPELL SYSTEM
+  // SPELLS
   // ============================================================
-  function castSpell(spellKey) {
+  function castSpell(key) {
     if (!player || !player.alive) return;
-    if (spellCooldowns[spellKey] && Date.now() < spellCooldowns[spellKey]) return;
-    const spell = SPELLS[spellKey];
-    if (!spell) return;
-
-    spellCooldowns[spellKey] = Date.now() + spell.cooldown;
+    if (spellCooldowns[key] && Date.now() < spellCooldowns[key]) return;
+    const sp = SPELLS[key];
+    if (!sp) return;
+    spellCooldowns[key] = Date.now() + sp.cooldown;
     statSpells++;
-
-    switch (spellKey) {
-      case "surge":
-        activeSpells.surge = Date.now() + spell.dur;
-        break;
-      case "ward":
-        activeSpells.ward = Date.now() + spell.dur;
-        break;
-      case "magnet":
-        activeSpells.magnet = Date.now() + spell.dur;
-        break;
-      case "dash":
-        performDash();
-        break;
-      case "vanish":
-        activeSpells.vanish = Date.now() + spell.dur;
-        break;
-      case "blast":
-        performBlast();
-        break;
+    switch (key) {
+      case "surge": activeSpells.surge = Date.now() + sp.dur; break;
+      case "ward": activeSpells.ward = Date.now() + sp.dur; break;
+      case "magnet": activeSpells.magnet = Date.now() + sp.dur; break;
+      case "vanish": activeSpells.vanish = Date.now() + sp.dur; break;
+      case "dash": performDash(); break;
+      case "blast": performBlast(); break;
     }
     updateSpellUI();
   }
@@ -127,233 +127,125 @@
     const inp = getPlayerInput();
     const m = Math.hypot(inp.x, inp.y);
     if (m < 0.1) return;
-    const dashDist = 200;
-    player.x += (inp.x / m) * dashDist;
-    player.y += (inp.y / m) * dashDist;
-    player.x = clamp(player.x, player.radius, world.w - player.radius);
-    player.y = clamp(player.y, player.radius, world.h - player.radius);
-    spawnParticles(player.x, player.y, "#d4b8ff", 12);
+    const d = 220;
+    player.x = clamp(player.x + (inp.x / m) * d, player.radius, world.w - player.radius);
+    player.y = clamp(player.y + (inp.y / m) * d, player.radius, world.h - player.radius);
+    spawnParticles(player.x, player.y, "#d4b8ff", 16);
+    shake = Math.max(shake, 6);
   }
 
   function performBlast() {
-    const blastRadius = 200;
-    const pushForce = 300;
-    for (const blob of blobs) {
-      if (blob === player || !blob.alive) continue;
-      const d = dist(blob, player);
-      if (d < blastRadius) {
-        const angle = Math.atan2(blob.y - player.y, blob.x - player.x);
-        const strength = (1 - d / blastRadius) * pushForce;
-        blob.x += Math.cos(angle) * strength;
-        blob.y += Math.sin(angle) * strength;
-        blob.target = null;
+    const R = 220, F = 320;
+    for (const b of blobs) {
+      if (b === player || !b.alive) continue;
+      const d = dist(b, player);
+      if (d < R) {
+        const a = Math.atan2(b.y - player.y, b.x - player.x);
+        const s = (1 - d / R) * F;
+        if (mode !== "net") {
+          b.x = clamp(b.x + Math.cos(a) * s, b.radius, world.w - b.radius);
+          b.y = clamp(b.y + Math.sin(a) * s, b.radius, world.h - b.radius);
+        } else { b.netKickX = (b.netKickX || 0) + Math.cos(a) * s; b.netKickY = (b.netKickY || 0) + Math.sin(a) * s; }
+        b.target = null;
       }
     }
-    spawnParticles(player.x, player.y, "#ff6b6b", 20);
+    spawnParticles(player.x, player.y, "#ff6b6b", 26);
+    shake = Math.max(shake, 12);
   }
 
-  function getSpellSpeedMultiplier() {
-    return activeSpells.surge && Date.now() < activeSpells.surge ? 1.8 : 1.0;
-  }
-
-  function isShielded() {
-    return activeSpells.ward && Date.now() < activeSpells.ward;
-  }
-
-  function isInvisible() {
-    return activeSpells.vanish && Date.now() < activeSpells.vanish;
-  }
-
-  function isMagnetActive() {
-    return activeSpells.magnet && Date.now() < activeSpells.magnet;
-  }
+  const spellSpeed = () => (activeSpells.surge && Date.now() < activeSpells.surge ? 1.8 : 1.0);
+  const isShielded = () => !!(activeSpells.ward && Date.now() < activeSpells.ward);
+  const isInvisible = () => !!(activeSpells.vanish && Date.now() < activeSpells.vanish);
+  const isMagnet = () => !!(activeSpells.magnet && Date.now() < activeSpells.magnet);
 
   // ============================================================
-  // PARTICLES & EFFECTS
+  // PARTICLES / POPUPS
   // ============================================================
-  function spawnParticles(x, y, color, count) {
-    for (let i = 0; i < count; i++) {
-      const angle = rand(0, Math.PI * 2);
-      const speed = rand(2, 8);
-      particles.push({
-        x, y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed,
-        life: 1,
-        decay: rand(0.02, 0.05),
-        color,
-        size: rand(2, 6),
-      });
+  function spawnParticles(x, y, color, n) {
+    for (let i = 0; i < n; i++) {
+      const a = rand(0, Math.PI * 2), sp = rand(2, 9);
+      particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 1, decay: rand(0.02, 0.05), color, size: rand(2, 6) });
     }
   }
-
+  function addPopup(x, y, text, color) {
+    popups.push({ x, y, text, color, life: 1 });
+  }
   function updateParticles() {
     for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.x += p.vx;
-      p.y += p.vy;
-      p.life -= p.decay;
+      const p = particles[i]; p.x += p.vx; p.y += p.vy; p.vx *= 0.96; p.vy *= 0.96; p.life -= p.decay;
       if (p.life <= 0) particles.splice(i, 1);
     }
-  }
-
-  function drawParticles() {
-    const s = view.scale;
-    ctx.save();
-    ctx.scale(s, s);
-    ctx.translate(-camera.x, -camera.y);
-    for (const p of particles) {
-      ctx.globalAlpha = p.life;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
+    for (let i = popups.length - 1; i >= 0; i--) {
+      const p = popups[i]; p.y -= 0.6; p.life -= 0.02;
+      if (p.life <= 0) popups.splice(i, 1);
     }
-    ctx.globalAlpha = 1;
-    ctx.restore();
   }
 
   // ============================================================
-  // BLOB CLASS
+  // BLOB
   // ============================================================
   class Blob {
     constructor(x, y, mass, color, name, isPlayer = false) {
-      this.x = x; this.y = y;
-      this.mass = mass;
-      this.color = color;
-      this.name = name;
-      this.isPlayer = isPlayer;
-      this.alive = true;
-      this.input = { x: 0, y: 0 };
-      this.vx = 0; this.vy = 0;
-      this.target = null;
-      this.wobble = rand(0, Math.PI * 2);
+      this.x = x; this.y = y; this.mass = mass; this.color = color; this.name = name;
+      this.isPlayer = isPlayer; this.alive = true; this.input = { x: 0, y: 0 };
+      this.vx = 0; this.vy = 0; this.target = null; this.wobble = rand(0, Math.PI * 2);
+      this.netKickX = 0; this.netKickY = 0;
     }
-
     get radius() { return massToRadius(this.mass); }
-
     update() {
       const r = this.radius;
-      let baseSpeed = speedFor(this.mass) * getSpellSpeedMultiplier();
-
+      let base = speedFor(this.mass) * spellSpeed();
       if (this.isPlayer) {
         const inp = this.input || { x: 0, y: 0 };
         const m = Math.hypot(inp.x, inp.y);
-        if (m > 0.001) {
-          const sp = Math.min(baseSpeed, baseSpeed * Math.min(1, m));
-          this.vx = (inp.x / m) * sp;
-          this.vy = (inp.y / m) * sp;
-        } else {
-          this.vx = this.vy = 0;
-        }
-      } else {
-        this.think();
-        const tx = this.target ? this.target.x : this.x;
-        const ty = this.target ? this.target.y : this.y;
-        const dx = tx - this.x, dy = ty - this.y;
-        const d = Math.hypot(dx, dy);
-        if (d > 1) {
-          const sp = Math.min(baseSpeed, d * 0.08);
-          this.vx = (dx / d) * sp;
-          this.vy = (dy / d) * sp;
-        } else {
-          this.vx = this.vy = 0;
-        }
+        if (m > 0.001) { const sp = Math.min(base, base * Math.min(1, m)); this.vx = (inp.x / m) * sp; this.vy = (inp.y / m) * sp; }
+        else this.vx = this.vy = 0;
+      } else { this.think(); const tx = this.target ? this.target.x : this.x, ty = this.target ? this.target.y : this.y;
+        const dx = tx - this.x, dy = ty - this.y, d = Math.hypot(dx, dy);
+        if (d > 1) { const sp = Math.min(base, d * 0.08); this.vx = (dx / d) * sp; this.vy = (dy / d) * sp; } else this.vx = this.vy = 0;
       }
-
-      this.x += this.vx;
-      this.y += this.vy;
-      this.x = clamp(this.x, r, world.w - r);
-      this.y = clamp(this.y, r, world.h - r);
+      this.x += this.vx; this.y += this.vy;
+      this.x = clamp(this.x, r, world.w - r); this.y = clamp(this.y, r, world.h - r);
       this.wobble += 0.05;
     }
-
     think() {
       if (!this.target || Math.random() < 0.02) {
-        const angle = rand(0, Math.PI * 2);
-        const reach = rand(200, 700);
-        this.target = {
-          x: clamp(this.x + Math.cos(angle) * reach, 0, world.w),
-          y: clamp(this.y + Math.sin(angle) * reach, 0, world.h),
-        };
+        const a = rand(0, Math.PI * 2), reach = rand(200, 700);
+        this.target = { x: clamp(this.x + Math.cos(a) * reach, 0, world.w), y: clamp(this.y + Math.sin(a) * reach, 0, world.h) };
       }
-
-      let threat = null, prey = null, bestPreyDist = Infinity;
-      for (const other of blobs) {
-        if (other === this || !other.alive) continue;
-        const d = dist(this, other);
-        if (d > 600) continue;
-        if (other.mass > this.mass * 1.15) {
-          if (!threat || d < dist(this, threat)) threat = other;
-        } else if (this.mass > other.mass * 1.15) {
-          if (d < bestPreyDist) { prey = other; bestPreyDist = d; }
-        }
+      let threat = null, prey = null, bd = Infinity;
+      for (const o of blobs) {
+        if (o === this || !o.alive) continue;
+        const d = dist(this, o); if (d > 600) continue;
+        if (o.mass > this.mass * 1.15) { if (!threat || d < dist(this, threat)) threat = o; }
+        else if (this.mass > o.mass * 1.15) { if (d < bd) { prey = o; bd = d; } }
       }
-
-      if (threat) {
-        const ax = this.x - threat.x, ay = this.y - threat.y;
-        const m = Math.hypot(ax, ay) || 1;
-        this.target = { x: this.x + (ax / m) * 400, y: this.y + (ay / m) * 400 };
-      } else if (prey) {
-        this.target = { x: prey.x, y: prey.y };
-      }
+      if (threat) { const ax = this.x - threat.x, ay = this.y - threat.y, m = Math.hypot(ax, ay) || 1; this.target = { x: this.x + (ax / m) * 400, y: this.y + (ay / m) * 400 }; }
+      else if (prey) this.target = { x: prey.x, y: prey.y };
     }
-
     draw() {
-      const sx = this.x - camera.x;
-      const sy = this.y - camera.y;
-      const r = this.radius;
-      const wobble = Math.sin(this.wobble) * 2;
-
-      // Shield effect
+      const r = this.radius, wob = Math.sin(this.wobble) * 2;
       if (this.isPlayer && isShielded()) {
-        ctx.beginPath();
-        ctx.arc(sx, sy, r + 10, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(100, 200, 255, 0.6)";
-        ctx.lineWidth = 3;
-        ctx.stroke();
-        ctx.beginPath();
-        ctx.arc(sx, sy, r + 10, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(100, 200, 255, 0.1)";
-        ctx.fill();
+        ctx.beginPath(); ctx.arc(this.x, this.y, r + 12, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(120,210,255,0.7)"; ctx.lineWidth = 4; ctx.stroke();
+        ctx.beginPath(); ctx.arc(this.x, this.y, r + 12, 0, Math.PI * 2); ctx.fillStyle = "rgba(120,210,255,0.12)"; ctx.fill();
       }
-
-      // Invisibility
-      if (this.isPlayer && isInvisible()) {
-        ctx.globalAlpha = 0.3;
-      }
-
-      // Player glow
+      if (this.isPlayer && isInvisible()) ctx.globalAlpha = 0.3;
       if (this.isPlayer) {
-        ctx.beginPath();
-        ctx.arc(sx, sy, r + 6, 0, Math.PI * 2);
-        ctx.strokeStyle = "rgba(212, 184, 255, 0.8)";
-        ctx.lineWidth = 3;
-        ctx.stroke();
+        ctx.beginPath(); ctx.arc(this.x, this.y, r + 7, 0, Math.PI * 2);
+        ctx.strokeStyle = "rgba(212,184,255,0.9)"; ctx.lineWidth = 3; ctx.stroke();
       }
-
-      // Body
-      ctx.beginPath();
-      ctx.arc(sx, sy, r + wobble, 0, Math.PI * 2);
-      ctx.fillStyle = this.color;
-      ctx.fill();
-
-      // Highlight
-      ctx.fillStyle = "rgba(255,255,255,0.3)";
-      ctx.beginPath();
-      ctx.arc(sx - r * 0.3, sy - r * 0.3, r * 0.25, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Name
-      ctx.fillStyle = "#fff";
-      ctx.font = `bold ${Math.max(12, r * 0.35)}px Segoe UI, sans-serif`;
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = "rgba(0,0,0,0.6)";
-      ctx.strokeText(this.name, sx, sy);
-      ctx.fillText(this.name, sx, sy);
-
+      // body with soft glow
+      ctx.beginPath(); ctx.arc(this.x, this.y, r + wob, 0, Math.PI * 2);
+      ctx.fillStyle = this.color; ctx.fill();
+      ctx.beginPath(); ctx.arc(this.x - r * 0.3, this.y - r * 0.3, r * 0.28, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.fill();
+      if (this.alive) {
+        ctx.fillStyle = "#fff"; ctx.font = `bold ${Math.max(12, r * 0.34)}px Segoe UI, sans-serif`;
+        ctx.textAlign = "center"; ctx.textBaseline = "middle";
+        ctx.lineWidth = 3; ctx.strokeStyle = "rgba(0,0,0,0.6)";
+        ctx.strokeText(this.name, this.x, this.y); ctx.fillText(this.name, this.x, this.y);
+      }
       ctx.globalAlpha = 1;
     }
   }
@@ -361,483 +253,387 @@
   // ============================================================
   // FOOD
   // ============================================================
-  function spawnFood() {
-    return { x: rand(0, world.w), y: rand(0, world.h), color: randColor() };
-  }
-
-  function drawFood(foodList) {
-    const s = view.scale;
-    ctx.save();
-    ctx.scale(s, s);
-    ctx.translate(-camera.x, -camera.y);
-    for (const food of foodList) {
-      const fx = Array.isArray(food) ? food[0] : food.x;
-      const fy = Array.isArray(food) ? food[1] : food.y;
-      const fc = Array.isArray(food) ? food[2] : food.color;
-      ctx.beginPath();
-      ctx.arc(fx, fy, CONFIG.foodRadius, 0, Math.PI * 2);
-      ctx.fillStyle = fc;
-      ctx.fill();
-    }
-    ctx.restore();
-  }
+  function spawnFood() { return { x: rand(0, world.w), y: rand(0, world.h), color: randColor() }; }
 
   // ============================================================
-  // COLLISIONS
+  // COLLISIONS (local sim only)
   // ============================================================
   function eatFood() {
-    for (const blob of blobs) {
-      if (!blob.alive) continue;
+    for (const b of blobs) {
+      if (!b.alive) continue;
+      const rr = (b.radius + CONFIG.foodRadius) ** 2;
       for (let f = foods.length - 1; f >= 0; f--) {
         const food = foods[f];
-        const d = Math.hypot(blob.x - food.x, blob.y - food.y);
-        if (d < blob.radius + CONFIG.foodRadius) {
-          let massGain = 1;
-          if (blob.isPlayer && isMagnetActive()) massGain = 3;
-          blob.mass += massGain;
-          foods.splice(f, 1);
-          foods.push(spawnFood());
-          if (blob.isPlayer) {
-            statEaten++;
-            comboTimer = 2000;
-          }
+        const dx = b.x - food.x, dy = b.y - food.y;
+        if (dx * dx + dy * dy < rr) {
+          let g = 1; if (b.isPlayer && isMagnet()) g = 3;
+          b.mass += g; foods.splice(f, 1); foods.push(spawnFood());
+          if (b.isPlayer) { statEaten++; comboTimer = 2000; addPopup(b.x, b.y - b.radius, `+${g}`, "#d4b8ff"); }
         }
       }
     }
   }
-
   function handleCollisions() {
-    for (let i = 0; i < blobs.length; i++) {
-      for (let j = i + 1; j < blobs.length; j++) {
-        const a = blobs[i], b = blobs[j];
-        if (!a.alive || !b.alive) continue;
-        const d = dist(a, b);
-        const rSum = a.radius + b.radius;
-        if (d < rSum) {
-          const bigger = a.mass > b.mass ? a : b;
-          const smaller = a.mass > b.mass ? b : a;
-          if (bigger.mass > smaller.mass * 1.15) {
-            if (smaller.isPlayer && isShielded()) continue;
-            bigger.mass += smaller.mass * 0.8;
-            smaller.alive = false;
-            spawnParticles(smaller.x, smaller.y, smaller.color, 15);
-            if (bigger.isPlayer) {
-              combo++;
-              comboTimer = 3000;
-              statEaten++;
-              showCombo();
-            }
-            if (smaller.isPlayer) endGame();
-          }
+    for (let i = 0; i < blobs.length; i++) for (let j = i + 1; j < blobs.length; j++) {
+      const a = blobs[i], b = blobs[j];
+      if (!a.alive || !b.alive) continue;
+      if (dist(a, b) < a.radius + b.radius) {
+        const big = a.mass > b.mass ? a : b, small = a.mass > b.mass ? b : a;
+        if (big.mass > small.mass * 1.15) {
+          if (small.isPlayer && isShielded()) continue;
+          big.mass += small.mass * 0.8; small.alive = false;
+          spawnParticles(small.x, small.y, small.color, 16); shake = Math.max(shake, 5);
+          if (big.isPlayer) { combo++; comboTimer = 3000; statEaten++; showCombo(); }
+          if (small.isPlayer) endGame();
         }
       }
     }
   }
 
   // ============================================================
-  // UI UPDATES
+  // UI
   // ============================================================
   function updateHUD() {
-    if (mode === "local2p") {
-      const alive = players.filter((p) => p.alive);
-      document.getElementById("mass-value").textContent = alive
-        .map((p) => Math.floor(p.mass))
-        .join(" vs ");
-    } else if (player) {
-      document.getElementById("mass-value").textContent = Math.floor(player.mass);
-    }
+    if (player) $("mass-value").textContent = Math.floor(player.mass);
   }
-
   function updateSpellUI() {
-    const slots = document.querySelectorAll(".spell-slot");
-    const keys = Object.keys(SPELLS);
-    slots.forEach((slot, i) => {
-      const key = keys[i];
-      if (!key) return;
-      const cd = spellCooldowns[key];
-      const onCooldown = cd && Date.now() < cd;
+    SPELL_ORDER.forEach((key, i) => {
+      const slot = document.querySelector(`.spell-slot[data-key="${key}"]`);
+      if (!slot) return;
+      const cd = spellCooldowns[key], onCd = cd && Date.now() < cd;
       const active = activeSpells[key] && Date.now() < activeSpells[key];
-      slot.style.opacity = onCooldown ? "0.4" : "1";
-      if (active) {
-        slot.style.borderColor = "#d4b8ff";
-        slot.style.boxShadow = "0 0 12px rgba(212,184,255,0.5)";
-      } else {
-        slot.style.borderColor = "";
-        slot.style.boxShadow = "";
-      }
+      const remain = onCd ? (cd - Date.now()) : 0;
+      slot.style.opacity = onCd ? "0.45" : "1";
+      slot.style.setProperty("--cd", onCd ? `${remain / SPELLS[key].cooldown * 100}` : "0");
+      slot.classList.toggle("active", !!active);
     });
   }
-
   function showCombo() {
     if (combo < 2) return;
-    const el = document.getElementById("combo-display");
-    document.getElementById("combo-text").textContent = `${combo}x Combo!`;
-    el.classList.remove("hidden");
-    setTimeout(() => el.classList.add("hidden"), 1500);
+    const el = $("combo-display");
+    $("combo-text").textContent = `${combo}x Combo!`;
+    el.classList.remove("hidden"); clearTimeout(showCombo._t);
+    showCombo._t = setTimeout(() => el.classList.add("hidden"), 1400);
   }
-
   function updateLeaderboard() {
-    const list = document.getElementById("leaderboard-list");
+    const list = $("leaderboard-list");
     const sorted = [...blobs].filter(b => b.alive).sort((a, b) => b.mass - a.mass).slice(0, 10);
     list.innerHTML = "";
-    sorted.forEach((b) => {
+    sorted.forEach(b => {
       const li = document.createElement("li");
       if (b.isPlayer) li.classList.add("me");
       li.innerHTML = `<span>${escapeHtml(b.name)}</span><span>${Math.floor(b.mass)}</span>`;
       list.appendChild(li);
     });
   }
-
   function updateMinimap() {
-    const mc = document.getElementById("minimap-canvas");
-    const mctx = mc.getContext("2d");
+    const mc = $("minimap-canvas"), mctx = mc.getContext("2d");
     const w = mc.width, h = mc.height;
     mctx.clearRect(0, 0, w, h);
-    mctx.fillStyle = "rgba(20, 10, 40, 0.8)";
-    mctx.fillRect(0, 0, w, h);
-
-    const scaleX = w / world.w, scaleY = h / world.h;
-
-    // Food dots
-    mctx.fillStyle = "rgba(180, 120, 255, 0.3)";
-    for (let i = 0; i < foods.length; i += 5) {
-      const f = foods[i];
-      mctx.fillRect(f.x * scaleX, f.y * scaleY, 1, 1);
-    }
-
-    // Blobs
-    for (const b of blobs) {
-      if (!b.alive) continue;
-      mctx.beginPath();
-      mctx.arc(b.x * scaleX, b.y * scaleY, Math.max(2, b.radius * scaleX * 0.5), 0, Math.PI * 2);
-      mctx.fillStyle = b.isPlayer ? "#d4b8ff" : b.color;
-      mctx.fill();
-    }
+    mctx.fillStyle = "rgba(20,10,40,0.85)"; mctx.fillRect(0, 0, w, h);
+    const sx = w / world.w, sy = h / world.h;
+    mctx.fillStyle = "rgba(180,120,255,0.3)";
+    for (let i = 0; i < foods.length; i += 6) { const f = foods[i]; mctx.fillRect(f.x * sx, f.y * sy, 1, 1); }
+    for (const b of blobs) { if (!b.alive) continue; mctx.beginPath(); mctx.arc(b.x * sx, b.y * sy, Math.max(2, b.radius * sx * 0.5), 0, Math.PI * 2); mctx.fillStyle = b.isPlayer ? "#d4b8ff" : b.color; mctx.fill(); }
   }
 
   // ============================================================
-  // CAMERA
+  // CAMERA + TRANSFORM
   // ============================================================
+  function visibleW() { return view.w / (view.scale * view.userZoom); }
+  function visibleH() { return view.h / (view.scale * view.userZoom); }
   function updateCamera() {
-    if (!players.length) return;
-    const alive = players.filter((p) => p.alive);
-    const list = alive.length ? alive : players;
-    if (list.length === 1) {
-      const p = list[0];
-      const targetX = p.x - view.w / 2;
-      const targetY = p.y - view.h / 2;
-      const scale = 1 / Math.pow(p.mass / 30, 0.25);
-      view.targetScale = clamp(scale, 0.45, 1);
-      camera.x = lerp(camera.x, targetX, 0.1);
-      camera.y = lerp(camera.y, targetY, 0.1);
-    } else {
-      let cx = 0, cy = 0;
-      for (const p of list) { cx += p.x; cy += p.y; }
-      cx /= list.length; cy /= list.length;
-      let maxD = 200;
-      for (const p of list) {
-        const d = Math.hypot(p.x - cx, p.y - cy) + p.radius;
-        if (d > maxD) maxD = d;
-      }
-      view.targetScale = clamp(Math.min(view.w, view.h) / (2 * maxD * 1.3), 0.25, 1);
-      camera.x = lerp(camera.x, cx - view.w / 2, 0.1);
-      camera.y = lerp(camera.y, cy - view.h / 2, 0.1);
-    }
+    const follow = player && player.alive ? player : (blobs.find(b => b.isPlayer) || null);
+    if (!follow) return;
+    const sc = view.scale * view.userZoom;
+    view.targetScale = clamp(1 / Math.pow(follow.mass / 30, 0.25), 0.45, 1);
+    const tx = follow.x - visibleW() / 2, ty = follow.y - visibleH() / 2;
+    camera.x = lerp(camera.x, tx, 0.12);
+    camera.y = lerp(camera.y, ty, 0.12);
     view.scale = lerp(view.scale, view.targetScale, 0.05);
   }
+  function worldTransform() {
+    const sc = view.scale * view.userZoom * dpr;
+    const shx = (Math.random() - 0.5) * shake, shy = (Math.random() - 0.5) * shake;
+    ctx.setTransform(sc, 0, 0, sc, (-camera.x + shx) * sc, (-camera.y + shy) * sc);
+  }
+  function screenTransform() { ctx.setTransform(dpr, 0, 0, dpr, 0, 0); }
 
   // ============================================================
   // INPUT
   // ============================================================
   function getPlayerInput() {
-    if (mode === "single") {
-      const dx = mouse.x - view.w / 2;
-      const dy = mouse.y - view.h / 2;
-      const m = Math.hypot(dx, dy);
+    if (joy.active) return joy.vector;
+    if (mode === "single" && !isTouch) {
+      const dx = mouse.x - view.w / 2, dy = mouse.y - view.h / 2, m = Math.hypot(dx, dy);
       return m > 1 ? { x: dx / m, y: dy / m } : { x: 0, y: 0 };
-    } else if (mode === "local2p") {
-      return joy.p1;
     }
     return { x: 0, y: 0 };
   }
-
-  function drivePlayerInputs() {
-    if (mode === "single") {
-      if (player && player.alive) player.input = getPlayerInput();
-    } else if (mode === "local2p") {
-      if (players[0] && players[0].alive) players[0].input = joy.p1;
-      if (players[1] && players[1].alive) players[1].input = joy.p2;
+  function driveInputs() {
+    if (mode === "single") { if (player && player.alive) player.input = getPlayerInput(); }
+    else if (mode === "local2p") {
+      if (players[0] && players[0].alive) players[0].input = joy.p1 || { x: 0, y: 0 };
+      if (players[1] && players[1].alive) players[1].input = joy.p2 || { x: 0, y: 0 };
     }
   }
 
   // ============================================================
-  // RENDERING
+  // RENDER
   // ============================================================
   function drawGrid() {
-    const s = view.scale;
-    ctx.save();
-    ctx.scale(s, s);
-    ctx.fillStyle = "#16213e";
-    ctx.fillRect(0, 0, view.w / s + 2, view.h / s + 2);
-    ctx.strokeStyle = "rgba(255,255,255,0.04)";
-    ctx.lineWidth = 1 / s;
-    const grid = 50;
-    const startX = Math.floor(camera.x / grid) * grid;
-    const startY = Math.floor(camera.y / grid) * grid;
+    const sx = view.scale * view.userZoom;
+    const left = camera.x - 40, top = camera.y - 40, right = camera.x + visibleW() + 40, bottom = camera.y + visibleH() + 40;
+    ctx.fillStyle = "#0c0c1e"; ctx.fillRect(left, top, right - left, bottom - top);
+    ctx.strokeStyle = "rgba(180,120,255,0.06)"; ctx.lineWidth = 1 / sx;
+    const g = 60;
     ctx.beginPath();
-    for (let x = startX; x <= camera.x + view.w / s; x += grid) {
-      ctx.moveTo(x - camera.x, 0);
-      ctx.lineTo(x - camera.x, world.h);
-    }
-    for (let y = startY; y <= camera.y + view.h / s; y += grid) {
-      ctx.moveTo(0, y - camera.y);
-      ctx.lineTo(world.w, y - camera.y);
-    }
+    for (let x = Math.floor(left / g) * g; x <= right; x += g) { ctx.moveTo(x, top); ctx.lineTo(x, bottom); }
+    for (let y = Math.floor(top / g) * g; y <= bottom; y += g) { ctx.moveTo(left, y); ctx.lineTo(right, y); }
     ctx.stroke();
-    ctx.strokeStyle = "rgba(212, 184, 255, 0.2)";
-    ctx.lineWidth = 3 / s;
-    ctx.strokeRect(-camera.x, -camera.y, world.w, world.h);
-    ctx.restore();
+    ctx.strokeStyle = "rgba(212,184,255,0.22)"; ctx.lineWidth = 4 / sx;
+    ctx.strokeRect(0, 0, world.w, world.h);
+  }
+  function inView(x, y, r) {
+    return x + r > camera.x && x - r < camera.x + visibleW() && y + r > camera.y && y - r < camera.y + visibleH();
+  }
+  function drawFoodList(list) {
+    for (const f of list) {
+      const fx = f[0] !== undefined ? f[0] : f.x, fy = f[1] !== undefined ? f[1] : f.y, fc = f[2] !== undefined ? f[2] : f.color;
+      if (!inView(fx, fy, 20)) continue;
+      ctx.beginPath(); ctx.arc(fx, fy, CONFIG.foodRadius, 0, Math.PI * 2); ctx.fillStyle = fc; ctx.fill();
+    }
+  }
+  function drawParticlesList() {
+    for (const p of particles) { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill(); }
+    ctx.globalAlpha = 1;
+  }
+  function drawPopups() {
+    ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "bold 18px Segoe UI, sans-serif";
+    for (const p of popups) { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillText(p.text, p.x, p.y); }
+    ctx.globalAlpha = 1;
+  }
+  function drawJoystick() {
+    if (!joy.active) return;
+    screenTransform();
+    ctx.beginPath(); ctx.arc(joy.ox, joy.oy, joy.maxR, 0, Math.PI * 2);
+    ctx.fillStyle = "rgba(180,120,255,0.10)"; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = "rgba(212,184,255,0.5)"; ctx.stroke();
+    const kx = joy.ox + joy.vector.x * joy.maxR, ky = joy.oy + joy.vector.y * joy.maxR;
+    ctx.beginPath(); ctx.arc(kx, ky, 28, 0, Math.PI * 2); ctx.fillStyle = "rgba(212,184,255,0.55)"; ctx.fill();
   }
 
-  // ============================================================
-  // GAME LOOP
-  // ============================================================
-  function loop(timestamp) {
+  function loop(ts) {
     if (!running || paused) return;
-    const dt = timestamp - lastTime;
-    lastTime = timestamp;
-    gameTime += dt;
+    const dt = ts - lastTime; lastTime = ts; gameTime += dt;
+    if (comboTimer > 0) { comboTimer -= dt; if (comboTimer <= 0) combo = 0; }
+    if (shake > 0) shake = Math.max(0, shake - dt * 0.02);
 
-    // Combo decay
-    if (comboTimer > 0) {
-      comboTimer -= dt;
-      if (comboTimer <= 0) combo = 0;
+    if (mode === "net") {
+      // server-authoritative: just send input + render
+      sendNetInput();
+    } else {
+      driveInputs();
+      for (const b of blobs) b.update();
+      eatFood(); handleCollisions();
     }
-
-    drivePlayerInputs();
-    for (const blob of blobs) blob.update();
-    eatFood();
-    handleCollisions();
     updateParticles();
+    if (player && player.alive) {
+      trails.push({ x: player.x, y: player.y, life: 1 });
+      if (trails.length > 14) trails.shift();
+    }
+    for (const t of trails) t.life -= 0.06;
+    trails = trails.filter(t => t.life > 0);
     updateCamera();
     updateSpellUI();
 
-    // Draw
-    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    screenTransform();
     ctx.clearRect(0, 0, view.w, view.h);
+    worldTransform();
     drawGrid();
-    drawFood(foods);
-    const sorted = [...blobs].filter(b => b.alive).sort((a, b) => a.mass - b.mass);
-    for (const blob of sorted) blob.draw();
-    drawParticles();
-    updateMinimap();
-
-    if (player) {
-      statMaxPower = Math.max(statMaxPower, Math.floor(player.mass));
+    drawFoodList(foods);
+    // player trail
+    if (trails.length > 1) {
+      ctx.strokeStyle = "rgba(212,184,255,0.18)"; ctx.lineWidth = player ? player.radius * 0.8 : 20; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(trails[0].x, trails[0].y);
+      for (const t of trails) ctx.lineTo(t.x, t.y); ctx.stroke();
     }
+    const sorted = [...blobs].filter(b => b.alive).sort((a, b) => a.mass - b.mass);
+    for (const b of sorted) if (inView(b.x, b.y, b.radius + 30)) b.draw();
+    drawParticlesList(); drawPopups();
+    drawJoystick();
 
-    updateHUD();
-    updateLeaderboard();
+    if (player) statMaxPower = Math.max(statMaxPower, Math.floor(player.mass));
+    updateHUD(); updateLeaderboard();
+
+    if (mode === "net" && net.self) {
+      if (!net.self.alive) $("respawn-overlay").classList.remove("hidden");
+      else $("respawn-overlay").classList.add("hidden");
+    }
     animationId = requestAnimationFrame(loop);
   }
 
   // ============================================================
-  // GAME START/END
+  // START / END
   // ============================================================
   function addPlayer(name, color) {
-    const p = new Blob(
-      rand(200, world.w - 200),
-      rand(200, world.h - 200),
-      CONFIG.startMass,
-      color,
-      name,
-      true
-    );
-    players.push(p);
-    blobs.push(p);
-    if (!player) player = p;
-    return p;
+    const p = new Blob(rand(200, world.w - 200), rand(200, world.h - 200), CONFIG.startMass, color, name, true);
+    players.push(p); blobs.push(p); if (!player) player = p; return p;
   }
-
-  function startGame(selectedMode) {
-    mode = selectedMode;
-    const counts = CONFIG.botCount[difficulty] || CONFIG.botCount.medium;
-    const foodCounts = CONFIG.foodCount[difficulty] || CONFIG.foodCount.medium;
-
-    world = mode === "local2p" ? { w: 2200, h: 2200 } : { ...CONFIG.world };
-    foods = [];
-    for (let i = 0; i < foodCounts; i++) foods.push(spawnFood());
-
-    blobs = [];
-    players = [];
-    player = null;
-    combo = 0;
-    gameTime = 0;
-    statEaten = 0;
-    statSpells = 0;
-    statMaxPower = 0;
-    activeSpells = {};
-    spellCooldowns = {};
-
-    const botNames = [
-      "Vortex", "Nibbler", "Gloop", "Bubbles", "Chonk", "Spike",
-      "Wobble", "Pixel", "Munch", "Doom", "Zoom", "Ghost", "Comet",
-      "Tank", "Echo", "Blaze", "Quark", "Tofu", "Hex", "Curse",
-      "Brew", "Hex", "Grimoire", "Cauldron", "Phantom", "Specter",
-    ];
-    for (let i = 0; i < counts; i++) {
-      blobs.push(new Blob(
-        rand(0, world.w), rand(0, world.h),
-        rand(20, 120), randColor(), botNames[i % botNames.length]
-      ));
-    }
-
-    const p1name = (document.getElementById("name-input").value || "Player 1").trim().slice(0, 16) || "Player 1";
-    addPlayer(p1name, "#d4b8ff");
-
-    if (mode === "local2p") {
-      const p2name = (document.getElementById("name-input-2").value || "Player 2").trim().slice(0, 16) || "Player 2";
-      addPlayer(p2name, "#ff5d8f");
-    }
-
-    camera = { x: world.w / 2 - view.w / 2, y: world.h / 2 - view.h / 2 };
-    view.scale = 1;
-    view.targetScale = 1;
-
-    document.getElementById("start-screen").classList.add("hidden");
-    document.getElementById("end-screen").classList.add("hidden");
-    document.getElementById("respawn-overlay").classList.add("hidden");
-    document.getElementById("hud").classList.remove("hidden");
-    document.getElementById("pause-menu").classList.add("hidden");
-
-    // Show mobile controls on touch devices
-    if ("ontouchstart" in window || navigator.maxTouchPoints > 0) {
-      document.getElementById("mobile-controls").classList.remove("hidden");
-    }
-
-    running = true;
-    paused = false;
-    lastTime = performance.now();
-    cancelAnimationFrame(animationId);
-    animationId = requestAnimationFrame(loop);
+  function startGame(selMode) {
+    mode = selMode;
+    const bc = CONFIG.botCount[difficulty] || 18, fc = CONFIG.foodCount[difficulty] || 600;
+    world = selMode === "local2p" ? { w: 2200, h: 2200 } : { ...CONFIG.world };
+    foods = []; for (let i = 0; i < fc; i++) foods.push(spawnFood());
+    blobs = []; players = []; player = null; combo = 0; gameTime = 0;
+    statEaten = statSpells = statMaxPower = 0; activeSpells = {}; spellCooldowns = {}; particles = []; popups = []; trails = [];
+    const names = ["Vortex","Nibbler","Gloop","Bubbles","Chonk","Spike","Wobble","Pixel","Munch","Doom","Zoom","Ghost","Comet","Tank","Echo","Blaze","Quark","Tofu","Hex","Curse","Brew","Grimoire","Cauldron","Phantom","Specter","Rune","Cackle","Moonpetal"];
+    for (let i = 0; i < bc; i++) blobs.push(new Blob(rand(0, world.w), rand(0, world.h), rand(20, 120), randColor(), names[i % names.length]));
+    const n1 = ($("name-input").value || "Witch").trim().slice(0, 16) || "Witch";
+    addPlayer(n1, "#d4b8ff");
+    if (selMode === "local2p") addPlayer(($("name-input-2").value || "Warlock").trim().slice(0, 16) || "Warlock", "#ff5d8f");
+    camera = { x: world.w / 2 - visibleW() / 2, y: world.h / 2 - visibleH() / 2 };
+    view.scale = 1; view.targetScale = 1; view.userZoom = 1;
+    $("start-screen").classList.add("hidden"); $("end-screen").classList.add("hidden");
+    $("respawn-overlay").classList.add("hidden"); $("hud").classList.remove("hidden"); $("pause-menu").classList.add("hidden");
+    if (isTouch) $("mobile-controls").classList.remove("hidden");
+    running = true; paused = false; lastTime = performance.now();
+    cancelAnimationFrame(animationId); animationId = requestAnimationFrame(loop);
   }
-
   function endGame() {
     running = false;
-    const minutes = Math.floor(gameTime / 60000);
-    const seconds = Math.floor((gameTime % 60000) / 1000);
-    document.getElementById("final-score").textContent = Math.floor(player ? player.mass : 0);
-    document.getElementById("stat-time").textContent = `${minutes}:${seconds.toString().padStart(2, "0")}`;
-    document.getElementById("stat-eaten").textContent = statEaten;
-    document.getElementById("stat-spells").textContent = statSpells;
-    document.getElementById("stat-max").textContent = statMaxPower;
-    document.getElementById("end-screen").classList.remove("hidden");
-    document.getElementById("hud").classList.add("hidden");
-    document.getElementById("mobile-controls").classList.add("hidden");
+    const m = Math.floor(gameTime / 60000), s = Math.floor((gameTime % 60000) / 1000);
+    $("final-score").textContent = Math.floor(player ? player.mass : 0);
+    $("stat-time").textContent = `${m}:${s.toString().padStart(2, "0")}`;
+    $("stat-eaten").textContent = statEaten; $("stat-spells").textContent = statSpells; $("stat-max").textContent = statMaxPower;
+    $("end-screen").classList.remove("hidden"); $("hud").classList.add("hidden"); $("mobile-controls").classList.add("hidden");
   }
+
+  // ============================================================
+  // NET MODE (in-app GameServer)
+  // ============================================================
+  function witchConnect(url) {
+    try {
+      mode = "net";
+      net.ws = new WebSocket(url);
+      net.ws.onopen = () => {
+        net.connected = true;
+        const name = ($("name-input").value || "Witch").trim().slice(0, 16) || "Witch";
+        net.ws.send(JSON.stringify({ type: "join", name, color: "#d4b8ff" }));
+      };
+      net.ws.onmessage = (ev) => {
+        let msg; try { msg = JSON.parse(ev.data); } catch { return; }
+        if (msg.type === "welcome") {
+          net.id = msg.id; world = { w: msg.world.w, h: msg.world.h };
+          $("start-screen").classList.add("hidden"); $("end-screen").classList.add("hidden");
+          $("hud").classList.remove("hidden");
+          if (isTouch) $("mobile-controls").classList.remove("hidden");
+          camera = { x: world.w / 2 - visibleW() / 2, y: world.h / 2 - visibleH() / 2 };
+          running = true; paused = false; lastTime = performance.now();
+          cancelAnimationFrame(animationId); animationId = requestAnimationFrame(loop);
+        } else if (msg.type === "state") {
+          world = { w: msg.world.w, h: msg.world.h };
+          net.foods = msg.foods || [];
+          for (const fb of net.foods) { /* normalize */ }
+          const seen = new Set();
+          for (const b of (msg.blobs || [])) {
+            seen.add(b.id);
+            let blob = net.byId.get(b.id);
+            if (!blob) { blob = new Blob(b.x, b.y, b.m, b.c, b.n, b.id === net.id); net.byId.set(b.id, blob); }
+            blob.x = b.x; blob.y = b.y; blob.mass = b.m; blob.color = b.c; blob.name = b.n; blob.alive = b.a === 1; blob.isPlayer = b.id === net.id;
+          }
+          for (const id of [...net.byId.keys()]) if (!seen.has(id)) net.byId.delete(id);
+          blobs = [...net.byId.values()];
+          foods = net.foods.map(f => Array.isArray(f) ? { x: f[0], y: f[1], color: f[2] } : f);
+          player = net.self = net.byId.get(net.id) || null;
+        }
+      };
+      net.ws.onclose = () => {
+        net.connected = false;
+        if (mode === "net") { running = false; $("conn-status").textContent = "Disconnected."; }
+      };
+    } catch (e) { $("conn-status").textContent = "Connect failed: " + e.message; }
+  }
+  function sendNetInput() {
+    if (!net.ws || net.ws.readyState !== 1 || !player) return;
+    const now = Date.now();
+    if (now - net.lastSent < 50) return;
+    net.lastSent = now;
+    const inp = getPlayerInput();
+    net.ws.send(JSON.stringify({ type: "input", x: +inp.x.toFixed(3), y: +inp.y.toFixed(3) }));
+  }
+  window.witchConnect = witchConnect;
 
   // ============================================================
   // RESIZE
   // ============================================================
   function resize() {
-    view.w = window.innerWidth;
-    view.h = window.innerHeight;
-    canvas.width = view.w;
-    canvas.height = view.h;
-    joyOrigin.p1 = { x: 90, y: view.h - 90 };
-    joyOrigin.p2 = { x: view.w - 90, y: view.h - 90 };
+    dpr = Math.min(window.devicePixelRatio || 1, 2.5);
+    view.w = window.innerWidth; view.h = window.innerHeight;
+    canvas.style.width = view.w + "px"; canvas.style.height = view.h + "px";
+    canvas.width = Math.floor(view.w * dpr); canvas.height = Math.floor(view.h * dpr);
+    joy.maxR = clamp(Math.min(view.w, view.h) * 0.16, 56, 90);
+    joy.dead = joy.maxR * 0.18;
   }
-
   window.addEventListener("resize", resize);
 
   // ============================================================
-  // INPUT HANDLERS
+  // POINTER INPUT (joystick + pinch)
   // ============================================================
-  canvas.addEventListener("mousemove", (e) => {
-    mouse.x = e.clientX;
-    mouse.y = e.clientY;
-  });
-
-  canvas.addEventListener("mousedown", (e) => {
-    mouse.down = true;
-    if (mode === "local2p") {
-      const side = e.clientX < view.w / 2 ? "p1" : "p2";
-      const o = joyOrigin[side];
-      let dx = e.clientX - o.x, dy = e.clientY - o.y;
-      const d = Math.hypot(dx, dy), R = 60;
-      if (d > R) { dx = (dx / d) * R; dy = (dy / d) * R; }
-      joy[side].x = dx / R;
-      joy[side].y = dy / R;
-    }
-  });
-
-  canvas.addEventListener("mouseup", () => {
-    mouse.down = false;
-    if (mode === "local2p") {
-      joy.p1.x = joy.p1.y = 0;
-      joy.p2.x = joy.p2.y = 0;
+  function setJoyFromPointer(t) {
+    let dx = t.clientX - joy.ox, dy = t.clientY - joy.oy;
+    const d = Math.hypot(dx, dy);
+    if (d < joy.dead) { joy.vector.x = 0; joy.vector.y = 0; return; }
+    const mag = Math.min(d, joy.maxR);
+    const norm = (d - joy.dead) / (joy.maxR - joy.dead);
+    const curve = norm * norm; // quadratic response for fine control
+    const ux = dx / (d || 1), uy = dy / (d || 1);
+    joy.vector.x = ux * curve; joy.vector.y = uy * curve;
+  }
+  canvas.addEventListener("pointerdown", (e) => {
+    if (mode === "net" && (!player || !player.alive)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.size >= 2) return; // pinch, not joystick
+    if (e.clientX < view.w * 0.5 && !joy.active) {
+      joy.active = true; joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY;
+      joy.vector.x = 0; joy.vector.y = 0;
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+      e.preventDefault();
+    } else if (mode === "single" && !isTouch) {
+      mouse.x = e.clientX; mouse.y = e.clientY;
     }
   });
-
-  // Touch
-  function onTouchStart(e) {
-    if (mode === "local2p") {
-      for (const t of e.changedTouches) {
-        const side = t.clientX < view.w / 2 ? "p1" : "p2";
-        const o = joyOrigin[side];
-        let dx = t.clientX - o.x, dy = t.clientY - o.y;
-        const d = Math.hypot(dx, dy), R = 60;
-        if (d > R) { dx = (dx / d) * R; dy = (dy / d) * R; }
-        joy[side].x = dx / R;
-        joy[side].y = dy / R;
-      }
-    } else {
-      if (e.touches[0]) {
-        mouse.x = e.touches[0].clientX;
-        mouse.y = e.touches[0].clientY;
-      }
+  canvas.addEventListener("pointermove", (e) => {
+    if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (joy.active && e.pointerId === joy.id) { setJoyFromPointer(e); e.preventDefault(); return; }
+    if (pointers.size === 2) { // pinch zoom
+      const pts = [...pointers.values()];
+      const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      if (pinchLast > 0) view.userZoom = clamp(view.userZoom * (d / pinchLast), 0.6, 1.8);
+      pinchLast = d; return;
     }
-    e.preventDefault();
-  }
-
-  function onTouchMove(e) {
-    if (mode === "local2p") {
-      for (const t of e.changedTouches) {
-        const side = t.clientX < view.w / 2 ? "p1" : "p2";
-        const o = joyOrigin[side];
-        let dx = t.clientX - o.x, dy = t.clientY - o.y;
-        const d = Math.hypot(dx, dy), R = 60;
-        if (d > R) { dx = (dx / d) * R; dy = (dy / d) * R; }
-        joy[side].x = dx / R;
-        joy[side].y = dy / R;
-      }
-    } else {
-      if (e.touches[0]) {
-        mouse.x = e.touches[0].clientX;
-        mouse.y = e.touches[0].clientY;
-      }
-    }
-    e.preventDefault();
-  }
-
-  function onTouchEnd(e) {
-    if (mode === "local2p") {
-      for (const t of e.changedTouches) {
-        const side = t.clientX < view.w / 2 ? "p1" : "p2";
-        joy[side].x = joy[side].y = 0;
-      }
+    if (mode === "single" && !isTouch && !joy.active) { mouse.x = e.clientX; mouse.y = e.clientY; }
+  });
+  let pinchLast = 0;
+  function endPointer(e) {
+    pointers.delete(e.pointerId);
+    if (pointers.size < 2) pinchLast = 0;
+    if (joy.active && e.pointerId === joy.id) {
+      joy.active = false; joy.id = null; joy.vector.x = 0; joy.vector.y = 0;
+      if (mode === "single" && player) player.input = { x: 0, y: 0 };
     }
   }
+  canvas.addEventListener("pointerup", endPointer);
+  canvas.addEventListener("pointercancel", endPointer);
+  canvas.addEventListener("pointerleave", endPointer);
+  canvas.style.touchAction = "none";
 
-  canvas.addEventListener("touchstart", onTouchStart, { passive: false });
-  canvas.addEventListener("touchmove", onTouchMove, { passive: false });
-  canvas.addEventListener("touchend", onTouchEnd);
-  canvas.addEventListener("touchcancel", onTouchEnd);
-
-  // Keyboard
+  // ============================================================
+  // KEYBOARD
+  // ============================================================
   document.addEventListener("keydown", (e) => {
     if (!running) return;
+    if (mode === "net" && (!player || !player.alive)) return;
     switch (e.key.toLowerCase()) {
       case "q": castSpell("surge"); break;
       case "e": castSpell("ward"); break;
@@ -845,124 +641,50 @@
       case "f": castSpell("blast"); break;
       case " ": castSpell("dash"); break;
       case "v": castSpell("vanish"); break;
-      case "escape":
-      case "p":
-        togglePause();
-        break;
+      case "escape": case "p": togglePause(); break;
     }
   });
 
-  // Spell buttons (mobile)
-  document.getElementById("spell-btn-0")?.addEventListener("click", () => castSpell("surge"));
-  document.getElementById("spell-btn-1")?.addEventListener("click", () => castSpell("ward"));
+  // Spells bar (mobile)
+  SPELL_ORDER.forEach((key) => {
+    const btn = document.querySelector(`.spell-btn[data-key="${key}"]`);
+    if (btn) btn.addEventListener("pointerdown", (e) => { e.preventDefault(); castSpell(key); });
+  });
 
-  // Joystick (mobile)
-  const joystickZone = document.getElementById("joystick-zone");
-  if (joystickZone) {
-    let joyTouch = null;
-    joystickZone.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-      const t = e.changedTouches[0];
-      joyTouch = t.identifier;
-      updateJoystick(t);
-    });
-    joystickZone.addEventListener("touchmove", (e) => {
-      e.preventDefault();
-      for (const t of e.changedTouches) {
-        if (t.identifier === joyTouch) updateJoystick(t);
-      }
-    });
-    joystickZone.addEventListener("touchend", (e) => {
-      for (const t of e.changedTouches) {
-        if (t.identifier === joyTouch) {
-          joyTouch = null;
-          if (mode === "single" && player) {
-            player.input = { x: 0, y: 0 };
-          }
-        }
-      }
-    });
-  }
-
-  function updateJoystick(touch) {
-    const o = joyOrigin.p1;
-    let dx = touch.clientX - o.x, dy = touch.clientY - o.y;
-    const d = Math.hypot(dx, dy), R = 60;
-    if (d > R) { dx = (dx / d) * R; dy = (dy / d) * R; }
-    const input = { x: dx / R, y: dy / R };
-    if (mode === "single" && player) {
-      player.input = input;
-    } else if (mode === "local2p") {
-      joy.p1.x = input.x;
-      joy.p1.y = input.y;
-    }
-  }
-
-  // ============================================================
-  // PAUSE
-  // ============================================================
   function togglePause() {
     paused = !paused;
-    document.getElementById("pause-menu").classList.toggle("hidden", !paused);
-    if (!paused) {
-      lastTime = performance.now();
-      animationId = requestAnimationFrame(loop);
-    }
+    $("pause-menu").classList.toggle("hidden", !paused);
+    if (!paused) { lastTime = performance.now(); animationId = requestAnimationFrame(loop); }
   }
-
-  document.getElementById("resume-btn")?.addEventListener("click", togglePause);
-  document.getElementById("quit-btn")?.addEventListener("click", () => {
-    running = false;
-    paused = false;
-    document.getElementById("pause-menu").classList.add("hidden");
-    document.getElementById("end-screen").classList.add("hidden");
-    document.getElementById("start-screen").classList.remove("hidden");
-    document.getElementById("hud").classList.add("hidden");
-    document.getElementById("mobile-controls").classList.add("hidden");
+  $("resume-btn")?.addEventListener("click", togglePause);
+  $("quit-btn")?.addEventListener("click", () => {
+    running = false; paused = false;
+    if (net.ws) try { net.ws.close(); } catch {}
+    $("pause-menu").classList.add("hidden"); $("end-screen").classList.add("hidden");
+    $("start-screen").classList.remove("hidden"); $("hud").classList.add("hidden"); $("mobile-controls").classList.add("hidden");
   });
 
-  // ============================================================
-  // BUTTON HANDLERS
-  // ============================================================
-  document.getElementById("play-solo")?.addEventListener("click", () => startGame("single"));
-  document.getElementById("play-duo")?.addEventListener("click", () => startGame("local2p"));
-  document.getElementById("play-online")?.addEventListener("click", () => {
-    const onlineOpts = document.getElementById("online-options");
-    onlineOpts.classList.toggle("hidden");
+  // Buttons
+  $("play-solo")?.addEventListener("click", () => startGame("single"));
+  $("play-duo")?.addEventListener("click", () => startGame("local2p"));
+  $("play-online")?.addEventListener("click", () => $("online-options").classList.toggle("hidden"));
+  $("connect-online-btn")?.addEventListener("click", () => {
+    const url = ($("server-input").value || "ws://127.0.0.1:3000").trim();
+    witchConnect(url);
   });
-
-  document.getElementById("restart-btn")?.addEventListener("click", () => {
-    document.getElementById("end-screen").classList.add("hidden");
-    document.getElementById("start-screen").classList.remove("hidden");
+  $("restart-btn")?.addEventListener("click", () => {
+    $("end-screen").classList.add("hidden"); $("start-screen").classList.remove("hidden");
   });
-
-  // Difficulty buttons
-  document.querySelectorAll(".diff-btn").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll(".diff-btn").forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-      difficulty = btn.dataset.diff;
-    });
-  });
-
-  // Enter key to start
-  document.getElementById("name-input")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") startGame("single");
-  });
-  document.getElementById("name-input-2")?.addEventListener("keydown", (e) => {
-    if (e.key === "Enter") startGame("local2p");
-  });
+  document.querySelectorAll(".diff-btn").forEach((b) => b.addEventListener("click", () => {
+    document.querySelectorAll(".diff-btn").forEach(x => x.classList.remove("active"));
+    b.classList.add("active"); difficulty = b.dataset.diff;
+  }));
+  $("name-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") startGame("single"); });
+  $("name-input-2")?.addEventListener("keydown", (e) => { if (e.key === "Enter") startGame("local2p"); });
 
   // ============================================================
   // INIT
   // ============================================================
   resize();
   updateSpellUI();
-
-  // Auto-join if served by game server
-  if (location.protocol.indexOf("http") === 0) {
-    const auto = "ws://" + location.host;
-    document.getElementById("server-input").value = auto;
-    // startOnline(auto); // Uncomment when server is ready
-  }
 })();
