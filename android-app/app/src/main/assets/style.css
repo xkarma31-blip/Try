@@ -1,4 +1,4 @@
-/* Witch.io — Atelier Arena v2: Soul Knight + VS + Magica */
+/* Witch.io — Atelier Arena v3: Vampire Survivors + Magica.io + Soul Knight */
 @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@500;700&family=IM+Fell+English:ital@0;1&display=swap');
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body {
@@ -30,11 +30,11 @@ html, body {
   padding:8px 12px 6px; min-width:160px;
   box-shadow:0 2px 0 #2b1d12, 0 8px 20px rgba(43,29,18,0.12);
 }
-#hp-bar, #mana-bar {
+#hp-bar, #shield-bar {
   height:6px; background:rgba(43,29,18,0.12); border-radius:999px; overflow:hidden; margin-bottom:3px;
 }
 #hp-fill { height:100%; width:100%; background:linear-gradient(90deg, #ff6b6b, #ff4444); transition:width 0.2s ease; }
-#mana-fill { height:100%; width:100%; background:linear-gradient(90deg, #4da6ff, #2d7dd2); transition:width 0.2s ease; }
+#mana-fill { height:100%; width:100%; background:linear-gradient(90deg, #b794f6, #7c5cbf); transition:width 0.2s ease; }
 #level-row {
   display:flex; gap:6px; align-items:center; margin-top:4px;
   font-family:system-ui,sans-serif; font-size:11px;
@@ -64,17 +64,6 @@ html, body {
   transition:height 0.1s linear; pointer-events:none;
 }
 .spell-slot:active { transform:translateY(1px); box-shadow:0 0.5px 0 #2b1d12; }
-
-/* Combo Weapon */
-#combo-weapon-row {
-  position:absolute; top:60px; left:10px;
-  background:rgba(253,246,227,0.92); border:1.5px solid #7c5cbf;
-  border-radius:10px; padding:5px 10px;
-  font-size:12px; font-weight:700; color:#7c5cbf;
-  box-shadow:0 0 12px rgba(124,92,191,0.2);
-  font-family:system-ui,sans-serif;
-}
-#combo-weapon-icon { margin-right:4px; font-size:14px; }
 
 /* Leaderboard */
 #leaderboard {
@@ -141,15 +130,6 @@ html, body {
 }
 .spell-btn:active { transform:translateY(1px) scale(0.95); box-shadow:0 0.5px 0 #2b1d12; border-color:#7c5cbf; }
 
-/* Combo */
-#combo-display {
-  position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
-  font-size:38px; font-weight:900; color:#6b3fa0;
-  text-shadow:0 2px 0 #fdf6e3, 0 0 16px rgba(212,184,255,0.6);
-  pointer-events:none; z-index:7; animation:comboPulse 0.4s ease-out;
-}
-@keyframes comboPulse { 0%{transform:translate(-50%,-50%) scale(1.4); opacity:0.6;} 100%{transform:translate(-50%,-50%) scale(1); opacity:1;} }
-
 /* ========== Overlays ========== */
 #start-screen, #end-screen, #respawn-overlay, #pause-menu, #levelup-overlay {
   position:fixed; inset:0; z-index:20;
@@ -186,6 +166,13 @@ html, body {
 .logo-icon { font-size:48px; margin-top:2px; animation:float 3s ease-in-out infinite; filter:drop-shadow(0 4px 8px rgba(43,29,18,0.12)); }
 @keyframes float { 0%,100%{transform:translateY(0);} 50%{transform:translateY(-6px);} }
 .tagline { font-size:13px; color:#8a7a6a; margin-bottom:16px; font-style:italic; letter-spacing:0.3px; }
+
+/* Tip Box */
+.tip-box {
+  background:rgba(124,92,191,0.08); border:1px dashed rgba(124,92,191,0.3);
+  border-radius:10px; padding:10px; font-size:11px; color:#6b5a4a;
+  font-family:system-ui,sans-serif; margin-top:8px;
+}
 
 /* Inputs */
 .name-row { margin-bottom:8px; }
