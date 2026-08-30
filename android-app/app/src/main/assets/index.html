@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0a1a" />
-  <meta name="apple-mobile-web-app-capent" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>Witch.io</title>
   <link rel="stylesheet" href="style.css" />
@@ -22,6 +22,7 @@
           <span id="level-badge">Lv 1</span>
           <span id="wave-display">Wave 0</span>
           <span id="timer-display">10:00</span>
+          <span id="server-status"></span>
         </div>
       </div>
 
@@ -43,21 +44,24 @@
     <div id="minimap">
       <canvas id="minimap-canvas" width="100" height="100"></canvas>
     </div>
+  </div>
 
-    <div id="mobile-controls" class="hidden">
-      <div id="joystick-zone"></div>
-      <div id="action-buttons">
-        <button id="dodge-btn" class="action-btn dodge">💨</button>
-        <button id="shield-btn" class="action-btn shield">🛡️</button>
+  <!-- Mobile Controls (always rendered, CSS hides on desktop) -->
+  <div id="mobile-controls" class="hidden">
+    <div id="joystick-zone">
+      <div id="joystick-base">
+        <div id="joystick-thumb"></div>
       </div>
-      <div id="spell-buttons">
-        <button class="spell-btn" data-idx="0">1</button>
-        <button class="spell-btn" data-idx="1">2</button>
-        <button class="spell-btn" data-idx="2">3</button>
-        <button class="spell-btn" data-idx="3">4</button>
-        <button class="spell-btn" data-idx="4">5</button>
-        <button class="spell-btn" data-idx="5">6</button>
-      </div>
+    </div>
+    <div id="action-buttons">
+      <button id="dodge-btn" class="action-btn dodge" aria-label="Dodge">
+        <span class="btn-icon">💨</span>
+        <span class="btn-label">Dodge</span>
+      </button>
+      <button id="shield-btn" class="action-btn shield" aria-label="Shield">
+        <span class="btn-icon">🛡️</span>
+        <span class="btn-label">Shield</span>
+      </button>
     </div>
   </div>
 
@@ -68,7 +72,7 @@
         <h1>Witch<span>.io</span></h1>
         <div class="logo-icon">🧙‍♀️</div>
       </div>
-      <p class="tagline">Auto-fire spellcraft • Element combos • Survive the storm</p>
+      <p class="tagline">Auto-fire spellcraft • Element combos • Multiplayer arena</p>
 
       <div class="name-row">
         <input id="name-input" type="text" maxlength="16" placeholder="Witch name..." autocomplete="off" />
@@ -81,35 +85,25 @@
         </button>
         <button id="play-online" class="mode-btn online">
           <span class="icon">🌐</span>
-          <span class="text">Online</span>
+          <span class="text">Multiplayer</span>
         </button>
       </div>
 
       <div id="online-options" class="hidden">
         <div class="name-row">
-          <input id="server-input" type="text" maxlength="120" placeholder="Server URL (ws://...)" autocomplete="off" />
+          <input id="server-input" type="text" maxlength="120" placeholder="Server (ws://IP:3000)" autocomplete="off" />
         </div>
-        <button id="connect-online-btn" class="mode-btn online"><span class="icon">🔗</span><span class="text">Connect</span></button>
-        <p id="conn-status" class="status"></p>
-      </div>
-
-      <div class="difficulty-row">
-        <label>Difficulty</label>
-        <div class="difficulty-buttons">
-          <button class="diff-btn active" data-diff="easy">Easy</button>
-          <button class="diff-btn" data-diff="medium">Medium</button>
-          <button class="diff-btn" data-diff="hard">Hard</button>
-        </div>
+        <p id="conn-status" class="status">Paste server URL, then tap Multiplayer</p>
       </div>
 
       <div class="controls-help">
         <div class="help-section">
           <h4>🖥️ Desktop</h4>
-          <p>WASD/Arrows move • Auto-fire weapons • Space dodge • E shield</p>
+          <p>WASD / Arrows move • Auto-fire • Space = dodge • E = shield</p>
         </div>
         <div class="help-section">
           <h4>📱 Mobile</h4>
-          <p>Left: move • Right: aim • Auto-fire • Dodge + Shield buttons</p>
+          <p>Left thumb: joystick move • Auto-fire toward enemies • Buttons: dodge + shield</p>
         </div>
       </div>
 
@@ -140,19 +134,10 @@
       <div id="end-stats">
         <div class="stat"><span id="stat-time">0:00</span><label>Time</label></div>
         <div class="stat"><span id="stat-kills">0</span><label>Kills</label></div>
-        <div class="stat"><span id="stat-combo">0</span><label>Best</label></div>
+        <div class="stat"><span id="stat-combo">0</span><label>Level</label></div>
         <div class="stat"><span id="stat-waves">0</span><label>Waves</label></div>
       </div>
       <button id="restart-btn">Try Again ✨</button>
-    </div>
-  </div>
-
-  <!-- Respawn Overlay -->
-  <div id="respawn-overlay" class="hidden">
-    <div class="panel">
-      <div class="respawn-icon">🌀</div>
-      <h1>Returning…</h1>
-      <div class="respawn-bar"><div id="respawn-progress"></div></div>
     </div>
   </div>
 
@@ -165,7 +150,7 @@
     </div>
   </div>
 
-  <!-- Level Up Draft (Vampire Survivors style) -->
+  <!-- Level Up Draft -->
   <div id="levelup-overlay" class="hidden">
     <div class="panel">
       <div style="font-size:32px">✨</div>

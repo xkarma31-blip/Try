@@ -1,4 +1,4 @@
-/* Witch.io — Atelier Arena v3: Vampire Survivors + Magica.io + Soul Knight */
+/* Witch.io — Atelier Arena v4: .io Multiplayer Combat */
 @import url('https://fonts.googleapis.com/css2?family=Crimson+Pro:wght@500;700&family=IM+Fell+English:ital@0;1&display=swap');
 * { margin:0; padding:0; box-sizing:border-box; }
 html, body {
@@ -45,6 +45,7 @@ html, body {
 }
 #wave-display { color:#8a7a6a; font-weight:600; }
 #timer-display { color:#7c5cbf; font-weight:700; margin-left:auto; }
+#server-status { color:#8a7a6a; font-size:10px; margin-left:6px; }
 
 /* Spell Slots */
 #spell-slots { display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end; }
@@ -63,7 +64,6 @@ html, body {
   height:var(--cd, 0%); background:rgba(43,29,18,0.7);
   transition:height 0.1s linear; pointer-events:none;
 }
-.spell-slot:active { transform:translateY(1px); box-shadow:0 0.5px 0 #2b1d12; }
 
 /* Leaderboard */
 #leaderboard {
@@ -93,42 +93,87 @@ html, body {
 }
 #minimap-canvas { display:block; }
 
-/* Mobile Controls */
-#mobile-controls { position:fixed; inset:0; pointer-events:none; z-index:6; }
-#joystick-zone { position:absolute; inset:0; pointer-events:none; }
+/* ========== MOBILE CONTROLS ========== */
+#mobile-controls {
+  position:fixed; inset:0; pointer-events:none; z-index:6;
+}
 
+/* Joystick Zone — entire left half of screen */
+#joystick-zone {
+  position:absolute; left:0; top:0; bottom:0; width:50%;
+  pointer-events:auto; touch-action:none;
+}
+#joystick-base {
+  position:absolute;
+  width:120px; height:120px;
+  border-radius:50%;
+  background:rgba(253,246,227,0.18);
+  border:2px solid rgba(253,246,227,0.35);
+  display:none; align-items:center; justify-content:center;
+  transform:translate(-50%,-50%);
+  box-shadow:0 0 20px rgba(124,92,191,0.15);
+}
+#joystick-base.active { display:flex; }
+#joystick-thumb {
+  width:48px; height:48px;
+  border-radius:50%;
+  background:rgba(124,92,191,0.65);
+  border:2px solid rgba(253,246,227,0.5);
+  box-shadow:0 0 12px rgba(124,92,191,0.4);
+  transition:none;
+}
+
+/* Action Buttons — right side */
 #action-buttons {
-  position:absolute; bottom:calc(24px + env(safe-area-inset-bottom, 0px)); left:50%;
-  transform:translateX(-50%);
-  display:flex; gap:10px; pointer-events:auto;
+  position:absolute;
+  bottom:calc(32px + env(safe-area-inset-bottom, 0px));
+  right:calc(16px + env(safe-area-inset-right, 0px));
+  display:flex; flex-direction:column; gap:12px;
+  pointer-events:auto;
 }
 .action-btn {
-  width:52px; height:52px; border-radius:50%;
-  background:rgba(253,246,227,0.96);
-  border:1.5px solid #2b1d12; font-size:22px;
-  display:flex; align-items:center; justify-content:center;
+  width:64px; height:64px; border-radius:50%;
+  background:rgba(253,246,227,0.92);
+  border:2px solid #2b1d12;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
   cursor:pointer; touch-action:manipulation;
-  box-shadow:0 2px 0 #2b1d12;
+  box-shadow:0 3px 0 #2b1d12, 0 6px 16px rgba(43,29,18,0.12);
+  transition:transform 0.08s ease, box-shadow 0.08s ease;
 }
-.action-btn.dodge:active { border-color:#b794f6; background:#f3eaff; }
-.action-btn.shield:active { border-color:#7c5cbf; background:#f3eaff; }
+.action-btn .btn-icon { font-size:24px; line-height:1; }
+.action-btn .btn-label {
+  font-size:8px; font-weight:700; color:#2b1d12;
+  font-family:system-ui,sans-serif; letter-spacing:0.3px;
+  margin-top:1px;
+}
+.action-btn.dodge {
+  background:rgba(183,148,246,0.25);
+  border-color:#7c5cbf;
+}
+.action-btn.dodge:active {
+  transform:scale(0.92);
+  box-shadow:0 1px 0 #7c5cbf, 0 2px 8px rgba(124,92,191,0.3);
+  background:rgba(183,148,246,0.5);
+}
+.action-btn.shield {
+  background:rgba(124,92,191,0.15);
+  border-color:#5a3d8a;
+}
+.action-btn.shield:active {
+  transform:scale(0.92);
+  box-shadow:0 1px 0 #5a3d8a, 0 2px 8px rgba(90,61,138,0.3);
+  background:rgba(124,92,191,0.4);
+}
 
-#spell-buttons {
-  position:absolute;
-  bottom:calc(18px + env(safe-area-inset-bottom, 0px));
-  right:calc(14px + env(safe-area-inset-right, 0px));
-  display:flex; flex-wrap:wrap; gap:5px; max-width:200px;
-  justify-content:flex-end; pointer-events:auto;
+/* Cooldown overlay on action buttons */
+.action-btn.on-cooldown {
+  opacity:0.4;
 }
-.spell-btn {
-  width:44px; height:44px; border-radius:50%;
-  background:rgba(253,246,227,0.96);
-  border:1.5px solid #2b1d12; font-size:14px; font-weight:700;
-  display:flex; align-items:center; justify-content:center;
-  cursor:pointer; transition:all 0.1s ease; touch-action:manipulation;
-  box-shadow:0 2px 0 #2b1d12; color:#2b1d12; font-family:system-ui,sans-serif;
+.action-btn.on-cooldown::after {
+  content:'';
+  position:absolute; inset:0; border-radius:50%;
+  background:rgba(43,29,18,0.5);
 }
-.spell-btn:active { transform:translateY(1px) scale(0.95); box-shadow:0 0.5px 0 #2b1d12; border-color:#7c5cbf; }
 
 /* ========== Overlays ========== */
 #start-screen, #end-screen, #respawn-overlay, #pause-menu, #levelup-overlay {
@@ -199,17 +244,6 @@ html, body {
 .mode-btn.solo:hover { background:#fff0c0; }
 .mode-btn.online:hover { background:#dff0e8; }
 .mode-btn .icon { font-size:15px; }
-
-/* Difficulty */
-.difficulty-row { margin-bottom:12px; }
-.difficulty-row label { font-size:11px; color:#8a7a6a; display:block; margin-bottom:5px; font-family:system-ui,sans-serif; letter-spacing:0.6px; text-transform:uppercase; }
-.difficulty-buttons { display:flex; gap:6px; justify-content:center; }
-.diff-btn {
-  padding:6px 12px; font-size:11px; font-weight:700;
-  border:1.2px solid #2b1d12; border-radius:999px; background:#fffaf0;
-  color:#8a7a6a; cursor:pointer; transition:all 0.12s ease; font-family:system-ui,sans-serif;
-}
-.diff-btn.active { background:#2b1d12; color:#fdf6e3; }
 
 /* Help */
 .controls-help { display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap; justify-content:center; }
@@ -298,8 +332,10 @@ button.secondary { background:#fffaf0; color:#2b1d12; }
   #leaderboard li { font-size:10px; }
   #minimap { bottom:6px; right:6px; }
   #minimap-canvas { width:80px; height:80px; }
-  #spell-buttons { bottom:calc(10px + env(safe-area-inset-bottom, 0px)); right:calc(10px + env(safe-area-inset-right, 0px)); gap:4px; }
-  .spell-btn { width:40px; height:40px; font-size:13px; }
-  #action-buttons { bottom:calc(20px + env(safe-area-inset-bottom, 0px)); }
-  .action-btn { width:46px; height:46px; font-size:20px; }
+  #action-buttons { bottom:calc(16px + env(safe-area-inset-bottom, 0px)); right:calc(12px + env(safe-area-inset-right, 0px)); gap:10px; }
+  .action-btn { width:56px; height:56px; }
+  .action-btn .btn-icon { font-size:20px; }
+  .action-btn .btn-label { font-size:7px; }
+  #joystick-base { width:100px; height:100px; }
+  #joystick-thumb { width:42px; height:42px; }
 }

@@ -1,7 +1,8 @@
 /**
- * Witch.io — Atelier Arena v3
- * Vampire Survivors auto-fire + Magica.io element combos + Soul Knight dodge + Witch Hat Atelier ink visuals
- * Auto-attack weapons, magnetic XP gems, weapon evolution, element discovery, screen shake, floating damage
+ * Witch.io — Atelier Arena v4
+ * .io multiplayer combat — Arrow.io auto-fire + Magica.io elements + Soul Knight dodge
+ * Witch Hat Atelier ink/parchment aesthetics
+ * Cross-platform: keyboard+mouse, touch joystick, gamepad
  */
 (() => {
   "use strict";
@@ -11,17 +12,15 @@
   // ============================================================
   const C = {
     world: { w: 4000, h: 4000 },
-    startHP: 100, startEnergy: 100, energyRegen: 0.15,
+    startHP: 100, startShield: 50,
     dodgeCooldown: 1500, dodgeDist: 200, dodgeDur: 280, dodgeIFrames: 400,
-    shieldMax: 50, shieldRegen: 0.04, shieldDelay: 3000,
+    shieldRegen: 0.04, shieldDelay: 3000,
     xpBase: 15, xpScale: 1.22,
     xpMagnetRange: 120, xpMagnetSpeed: 8,
-    runDuration: 600000,
     waveInterval: 8000, bossInterval: 120000,
-    foodCount: { easy: 300, medium: 250, hard: 200 },
-    spawnRadius: 900,
     maxWeapons: 6, maxPassives: 6,
     weaponLevelMax: 8,
+    spawnRadius: 1200,
     colors: {
       fire: "#ff4444", fireGlow: "rgba(255,68,68,0.4)",
       water: "#4da6ff", waterGlow: "rgba(77,166,255,0.4)",
@@ -34,114 +33,84 @@
     },
   };
 
-  // ============================================================
-  // ELEMENT DEFINITIONS
-  // ============================================================
   const ELEMENTS = {
-    fire: { name: "Fire", icon: "🔥", color: C.colors.fire, glow: C.colors.fireGlow, desc: "Burns foes over time" },
-    water: { name: "Water", icon: "💧", color: C.colors.water, glow: C.colors.waterGlow, desc: "Freezes and slows" },
-    earth: { name: "Earth", icon: "🌍", color: C.colors.earth, glow: C.colors.earthGlow, desc: "Heavy hits, stuns" },
-    shadow: { name: "Shadow", icon: "🌑", color: C.colors.shadow, glow: C.colors.shadowGlow, desc: "Pierces, drains life" },
-    lightning: { name: "Lightning", icon: "⚡", color: C.colors.lightning, glow: C.colors.lightningGlow, desc: "Fire+Water" },
-    meteor: { name: "Meteor", icon: "☄️", color: C.colors.meteor, glow: C.colors.meteorGlow, desc: "Fire+Earth" },
-    ice: { name: "Ice", icon: "❄️", color: C.colors.ice, glow: C.colors.iceGlow, desc: "Water+Earth" },
-    void: { name: "Void", icon: "🕳️", color: C.colors.void, glow: C.colors.voidGlow, desc: "Fire+Shadow" },
+    fire: { name: "Fire", icon: "🔥", color: C.colors.fire, glow: C.colors.fireGlow, desc: "Burns foes" },
+    water: { name: "Water", icon: "💧", color: C.colors.water, glow: C.colors.waterGlow, desc: "Slows enemies" },
+    earth: { name: "Earth", icon: "🌍", color: C.colors.earth, glow: C.colors.earthGlow, desc: "Stuns foes" },
+    shadow: { name: "Shadow", icon: "🌑", color: C.colors.shadow, glow: C.colors.shadowGlow, desc: "Pierces armor" },
+    lightning: { name: "Lightning", icon: "⚡", color: C.colors.lightning, glow: C.colors.lightningGlow, desc: "Fire+Water combo" },
+    meteor: { name: "Meteor", icon: "☄️", color: C.colors.meteor, glow: C.colors.meteorGlow, desc: "Fire+Earth combo" },
+    ice: { name: "Ice", icon: "❄️", color: C.colors.ice, glow: C.colors.iceGlow, desc: "Water+Earth combo" },
+    void: { name: "Void", icon: "🕳️", color: C.colors.void, glow: C.colors.voidGlow, desc: "Fire+Shadow combo" },
   };
 
-  // ============================================================
-  // WEAPON DEFINITIONS (auto-fire, level-scaled)
-  // ============================================================
   const WEAPON_DEFS = {
-    // FIRE weapons
     flameOrbit: {
       name: "Flame Orbit", icon: "🔥", element: "fire",
-      desc: "Orbiting flames that burn",
       baseDmg: 8, baseCd: 800, baseArea: 90, baseCount: 2, basePierce: 1,
       projSpeed: 0, orbit: true, dot: { dmg: 2, dur: 2000 },
       evolve: { into: "flameDragon", needsElement: "fire" },
     },
     flameDragon: {
       name: "Flame Dragon", icon: "🐉", element: "fire",
-      desc: "Massive fire dragon orbits you",
       baseDmg: 18, baseCd: 600, baseArea: 140, baseCount: 3, basePierce: 99,
-      projSpeed: 0, orbit: true, dot: { dmg: 5, dur: 3000 },
-      evolved: true,
+      projSpeed: 0, orbit: true, dot: { dmg: 5, dur: 3000 }, evolved: true,
     },
-    // WATER weapons
     tideWave: {
       name: "Tide Wave", icon: "🌊", element: "water",
-      desc: "Forward wave that slows",
       baseDmg: 6, baseCd: 1200, baseArea: 120, baseCount: 1, basePierce: 3,
       projSpeed: 5, cone: true, coneAngle: 0.6, slow: { pct: 0.4, dur: 2000 },
       evolve: { into: "tsunami", needsElement: "water" },
     },
     tsunami: {
       name: "Tsunami", icon: "🌊", element: "water",
-      desc: "Massive wave that freezes everything",
       baseDmg: 14, baseCd: 900, baseArea: 220, baseCount: 2, basePierce: 99,
-      projSpeed: 6, cone: true, coneAngle: 1.2, slow: { pct: 0.7, dur: 3000 },
-      evolved: true,
+      projSpeed: 6, cone: true, coneAngle: 1.2, slow: { pct: 0.7, dur: 3000 }, evolved: true,
     },
-    // EARTH weapons
     stonePillar: {
       name: "Stone Pillar", icon: "🪨", element: "earth",
-      desc: "Pillars erupt from ground",
       baseDmg: 12, baseCd: 1500, baseArea: 60, baseCount: 1, basePierce: 1,
       projSpeed: 0, ground: true, stun: { dur: 800 },
       evolve: { into: "earthquake", needsElement: "earth" },
     },
     earthquake: {
       name: "Earthquake", icon: "🌋", element: "earth",
-      desc: "Massive AoE stun around you",
       baseDmg: 25, baseCd: 2000, baseArea: 180, baseCount: 1, basePierce: 99,
-      projSpeed: 0, ground: true, stun: { dur: 2000 },
-      evolved: true,
+      projSpeed: 0, ground: true, stun: { dur: 2000 }, evolved: true,
     },
-    // SHADOW weapons
     shadowBolt: {
       name: "Shadow Bolt", icon: "🌑", element: "shadow",
-      desc: "Homing bolts that drain life",
       baseDmg: 7, baseCd: 900, baseArea: 40, baseCount: 2, basePierce: 2,
       projSpeed: 4, homing: true, lifesteal: 0.15,
       evolve: { into: "voidRift", needsElement: "shadow" },
     },
     voidRift: {
       name: "Void Rift", icon: "🕳️", element: "shadow",
-      desc: "Tearing void that devours",
       baseDmg: 16, baseCd: 700, baseArea: 60, baseCount: 3, basePierce: 99,
-      projSpeed: 5, homing: true, lifesteal: 0.25,
-      evolved: true,
+      projSpeed: 5, homing: true, lifesteal: 0.25, evolved: true,
     },
-    // COMBO weapons
     lightningChain: {
       name: "Lightning Chain", icon: "⚡", element: "lightning",
-      desc: "Chains between enemies",
       baseDmg: 10, baseCd: 600, baseArea: 200, baseCount: 1, basePierce: 4,
       projSpeed: 12, chain: true, chainCount: 3,
     },
     meteorShower: {
       name: "Meteor Shower", icon: "☄️", element: "meteor",
-      desc: "Rains meteors from above",
       baseDmg: 20, baseCd: 2000, baseArea: 80, baseCount: 3, basePierce: 2,
       projSpeed: 0, ground: true, aoe: true,
     },
     iceNova: {
       name: "Ice Nova", icon: "❄️", element: "ice",
-      desc: "Freezing explosion around you",
       baseDmg: 8, baseCd: 1800, baseArea: 160, baseCount: 1, basePierce: 99,
       projSpeed: 0, nova: true, slow: { pct: 0.6, dur: 3000 },
     },
     voidStorm: {
       name: "Void Storm", icon: "🕳️", element: "void",
-      desc: "Devastating void explosion",
       baseDmg: 30, baseCd: 3000, baseArea: 200, baseCount: 1, basePierce: 99,
       projSpeed: 0, nova: true,
     },
   };
 
-  // ============================================================
-  // PASSIVE DEFINITIONS
-  // ============================================================
   const PASSIVES = [
     { id: "might", name: "Might", icon: "⚔️", desc: "+15% damage", apply: (p) => { p.dmgMult += 0.15; } },
     { id: "speed", name: "Haste", icon: "👟", desc: "+12% move speed", apply: (p) => { p.spdMult += 0.12; } },
@@ -149,15 +118,12 @@
     { id: "magnet", name: "Magnet", icon: "🧲", desc: "+50% XP range", apply: (p) => { p.xpMagnetRange *= 1.5; } },
     { id: "recovery", name: "Recovery", icon: "💚", desc: "+0.2 HP/sec", apply: (p) => { p.regen += 0.2; } },
     { id: "cooldown", name: "Channeling", icon: "⏱️", desc: "-15% cooldowns", apply: (p) => { p.cdMult -= 0.15; } },
-    { id: "area", name: "扩展", icon: "🔮", desc: "+20% area", apply: (p) => { p.areaMult += 0.2; } },
+    { id: "area", name: "Reach", icon: "🔮", desc: "+20% area", apply: (p) => { p.areaMult += 0.2; } },
     { id: "luck", name: "Luck", icon: "🍀", desc: "+30% rare drops", apply: (p) => { p.luck += 0.3; } },
     { id: "greed", name: "Greed", icon: "💰", desc: "+40% XP gain", apply: (p) => { p.xpMult += 0.4; } },
     { id: "pierce", name: "Piercing", icon: "🎯", desc: "+1 pierce to all", apply: (p) => { p.pierceBonus += 1; } },
   ];
 
-  // ============================================================
-  // ENEMY TYPES
-  // ============================================================
   const ENEMY_TYPES = {
     grunt: { baseHP: 25, baseDmg: 5, spd: 1.6, radius: 14, color: "#7c3aed", xp: 4 },
     ranged: { baseHP: 18, baseDmg: 7, spd: 1.2, radius: 12, color: "#ff6b3d", xp: 5, shootCd: 2000, shootSpd: 4 },
@@ -166,24 +132,20 @@
     boss: { baseHP: 400, baseDmg: 15, spd: 1.0, radius: 35, color: "#ff4444", xp: 50 },
   };
 
-  const BOSS_NAMES = ["Void Witch", "Shadow Lord", "Flame Serpent", "Frost Giant", "Stone Golem", "Storm Caller"];
-  const ENEMY_NAMES = ["Goblin", "Slime", "Imp", "Wisp", "Shade", "Creep", "Blight", "Murk", "Thorn", "Rift", "Dusk", "Ember"];
-
   // ============================================================
-  // UTILITY
+  // UTILS
   // ============================================================
+  const $ = (id) => document.getElementById(id);
   const rand = (a, b) => a + Math.random() * (b - a);
   const randInt = (a, b) => Math.floor(rand(a, b + 1));
   const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
   const dist = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
   const lerp = (a, b, t) => a + (b - a) * t;
   const hsl = (h, s, l) => `hsl(${h},${s}%,${l}%)`;
-
-  function randName() { return ENEMY_NAMES[randInt(0, ENEMY_NAMES.length - 1)]; }
   function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = randInt(0, i); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 
   // ============================================================
-  // CANVAS + DPR
+  // CANVAS
   // ============================================================
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
@@ -203,10 +165,10 @@
   // ============================================================
   // STATE
   // ============================================================
-  let mode = "single", running = false, paused = false, difficulty = "easy";
-  let gameTime = 0, runTimer = 0, waveNum = 0, waveTimer = 0, bossTimer = 0;
-  let nextBossId = 1;
-  let statKills = 0, statMaxCombo = 0;
+  let mode = "single"; // "single" or "online"
+  let running = false, paused = false, difficulty = "easy";
+  let gameTime = 0, runTimer = 0, waveNum = 0, waveTimer = 0;
+  let statKills = 0;
   let xp = 0, level = 1, xpToNext = C.xpBase, pendingLevelUps = 0;
   let animationId = 0, lastTime = 0;
   let screenShake = 0;
@@ -214,28 +176,128 @@
   const camera = { x: 0, y: 0 };
   const mouse = { x: 0, y: 0 };
   const joy = { active: false, sx: 0, sy: 0, cx: 0, cy: 0, vector: { x: 0, y: 0 } };
+  const aim = { x: 0, y: 0, active: false };
   const pointers = new Map();
   const isTouch = ("ontouchstart" in window) || navigator.maxTouchPoints > 0;
 
   let world = { ...C.world };
   let player = null;
+  let otherPlayers = new Map(); // id -> {x,y,hp,name,color,alive,score,kills,angle}
   let enemies = [];
   let projectiles = [];
   let xpGems = [];
   let particles = [];
   let popups = [];
-  let decals = [];
   let enemyProjectiles = [];
 
   // ============================================================
-  // PLAYER
+  // MULTIPLAYER (WebSocket)
+  // ============================================================
+  let ws = null;
+  let myId = null;
+  let wsReconnectTimer = null;
+
+  function connectWS(url) {
+    if (ws) { try { ws.close(); } catch (_) {} }
+    mode = "online";
+    console.log(`[WS] Connecting to ${url}...`);
+    ws = new WebSocket(url);
+    ws.onopen = () => {
+      console.log("[WS] Connected!");
+      ws.send(JSON.stringify({ type: "join", name: $("name-input")?.value || "Witch" }));
+      $("server-status").textContent = "Connected!";
+      $("server-status").style.color = "#4da6ff";
+    };
+    ws.onmessage = (e) => {
+      try {
+        const msg = JSON.parse(e.data);
+        handleServerMessage(msg);
+      } catch (_) {}
+    };
+    ws.onclose = () => {
+      console.log("[WS] Disconnected");
+      $("server-status").textContent = "Disconnected — reconnecting...";
+      $("server-status").style.color = "#ff6b3d";
+      wsReconnectTimer = setTimeout(() => connectWS(url), 3000);
+    };
+    ws.onerror = (e) => {
+      console.log("[WS] Error", e);
+      $("server-status").textContent = "Connection failed";
+      $("server-status").style.color = "#ff4444";
+    };
+  }
+
+  function handleServerMessage(msg) {
+    switch (msg.type) {
+      case "welcome":
+        myId = msg.id;
+        world = msg.world;
+        if (player) { player.name = msg.name; player.color = msg.color; }
+        console.log(`[WS] Welcome! ID=${msg.id}, Name=${msg.name}`);
+        break;
+      case "state":
+        handleServerState(msg);
+        break;
+      case "death":
+        console.log(`[WS] Killed by ${msg.killer}`);
+        addPopup(player?.x || 0, (player?.y || 0) - 40, `Killed by ${msg.killer}!`, "#ff4444");
+        break;
+      case "pong":
+        break;
+    }
+  }
+
+  function handleServerState(msg) {
+    gameTime = msg.t;
+    waveNum = msg.wave;
+
+    // Update other players
+    otherPlayers.clear();
+    for (const pd of msg.players) {
+      if (pd.id === myId) {
+        // Server authoritative position — smooth towards it
+        if (player && pd.alive) {
+          const dx = pd.x - player.x, dy = pd.y - player.y;
+          const d = Math.hypot(dx, dy);
+          if (d > 5) {
+            player.x = lerp(player.x, pd.x, 0.2);
+            player.y = lerp(player.y, pd.y, 0.2);
+          }
+          player.score = pd.score;
+          player.kills = pd.kills;
+        }
+        continue;
+      }
+      otherPlayers.set(pd.id, pd);
+    }
+
+    // Update enemies from server
+    enemies = msg.enemies.map(e => ({
+      ...e, alive: e.alive === 1,
+      wobble: e.wobble || 0,
+      stunUntil: e.stunUntil || 0, slowUntil: e.slowUntil || 0, slowPct: e.slowPct || 0,
+      burnUntil: e.burnUntil || 0, burnDmg: e.burnDmg || 0,
+      shootTimer: e.shootTimer || 0,
+    }));
+
+    // Update XP gems
+    xpGems = msg.xp.map(g => ({ ...g, pulse: 0, color: hsl(270 + g.v * 3, 70, 60) }));
+  }
+
+  function sendInput() {
+    if (!ws || ws.readyState !== 1 || !player) return;
+    const inp = getPlayerInput();
+    ws.send(JSON.stringify({ type: "input", x: inp.x, y: inp.y, angle: player._lastAngle }));
+  }
+
+  // ============================================================
+  // PLAYER (local representation)
   // ============================================================
   class Player {
     constructor(x, y, name, color) {
       this.x = x; this.y = y; this.name = name; this.color = color;
       this.radius = 22; this.hp = C.startHP; this.maxHP = C.startHP;
-      this.energy = C.startEnergy; this.maxEnergy = C.startEnergy;
-      this.shield = C.shieldMax; this.maxShield = C.shieldMax;
+      this.shield = C.startShield; this.maxShield = C.startShield;
       this.shieldTimer = 0;
       this.alive = true; this.input = { x: 0, y: 0 };
       this.wobble = 0; this.speed = 3.2;
@@ -246,6 +308,7 @@
       this.elements = {};
       this.iFrameUntil = 0; this.dodgeUntil = 0; this.dodgeCooldownUntil = 0;
       this._lastAngle = 0;
+      this.score = 0; this.kills = 0;
     }
     get speedVal() { return this.speed * this.spdMult; }
     addWeapon(id) {
@@ -343,7 +406,7 @@
   }
 
   // ============================================================
-  // ENEMY
+  // ENEMY (local, for single-player)
   // ============================================================
   class Enemy {
     constructor(x, y, hp, dmg, spd, color, name, type) {
@@ -355,11 +418,10 @@
       this.xp = ENEMY_TYPES[type]?.xp || 4;
       this.shootTimer = ENEMY_TYPES[type]?.shootCd || 99999;
       this.stunUntil = 0; this.slowUntil = 0; this.slowPct = 0;
-      this.burnUntil = 0; this.burnDmg = 0;
     }
     takeDamage(dmg, element) {
       this.hp -= dmg;
-      if (element === "fire") { this.burnUntil = Date.now() + 2000; this.burnDmg = dmg * 0.3; }
+      if (element === "fire") { /* burn handled in single player */ }
       if (element === "water" || element === "ice") { this.slowUntil = Date.now() + 2000; this.slowPct = 0.5; }
       if (element === "earth") { this.stunUntil = Date.now() + 600; }
       spawnParticles(this.x, this.y, ELEMENTS[element]?.color || this.color, 4);
@@ -369,18 +431,15 @@
     }
     onDeath() {
       statKills++;
-      statMaxCombo = Math.max(statMaxCombo, 1);
       for (let i = 0; i < 3; i++) {
-        xpGems.push({ x: this.x + rand(-15, 15), y: this.y + rand(-15, 15), value: this.xp * (player?.xpMult || 1), radius: 4 + Math.min(this.xp, 10), color: hsl(270 + this.xp * 3, 70, 60), life: 30000 });
+        xpGems.push({ x: this.x + rand(-15, 15), y: this.y + rand(-15, 15), value: this.xp * (player?.xpMult || 1), radius: 4 + Math.min(this.xp, 10), color: hsl(270 + this.xp * 3, 70, 60), life: 30000, pulse: 0 });
       }
       spawnParticles(this.x, this.y, this.color, 12);
-      if (this.type === "boss") { for (let i = 0; i < 8; i++) { xpGems.push({ x: this.x + rand(-30, 30), y: this.y + rand(-30, 30), value: 15 * (player?.xpMult || 1), radius: 8, color: hsl(40, 90, 65), life: 60000 }); } }
     }
     update(dt) {
       if (!this.alive) return;
       const now = Date.now();
       if (now < this.stunUntil) return;
-      if (now < this.burnUntil && gameTime % 500 < dt) { this.hp -= this.burnDmg; addPopup(this.x, this.y - this.radius, Math.floor(this.burnDmg).toString(), "#ff6600"); if (this.hp <= 0) { this.alive = false; this.onDeath(); return; } }
       if (player && player.alive) {
         const a = Math.atan2(player.y - this.y, player.x - this.x);
         const spdMult = now < this.slowUntil ? (1 - this.slowPct) : 1;
@@ -401,7 +460,7 @@
   }
 
   // ============================================================
-  // SPAWNING
+  // SPAWNING (single-player only)
   // ============================================================
   function spawnWave() {
     waveNum++; waveTimer = C.waveInterval;
@@ -413,27 +472,31 @@
     for (let i = 0; i < count; i++) {
       const t = types[randInt(0, types.length - 1)];
       const def = ENEMY_TYPES[t];
-      const hp = def.baseHP * hpMult;
-      const dmg = def.baseDmg * dmgMult;
       const ang = rand(0, Math.PI * 2);
       const r = rand(C.spawnRadius * 0.6, C.spawnRadius);
-      const ex = clamp(player.x + Math.cos(ang) * r, 50, world.w - 50);
-      const ey = clamp(player.y + Math.sin(ang) * r, 50, world.h - 50);
-      enemies.push(new Enemy(ex, ey, hp, dmg, def.spd, def.color, randName(), t));
+      enemies.push(new Enemy(
+        clamp(player.x + Math.cos(ang) * r, 50, world.w - 50),
+        clamp(player.y + Math.sin(ang) * r, 50, world.h - 50),
+        def.baseHP * hpMult, def.baseDmg * dmgMult, def.spd, def.color,
+        ["Goblin", "Slime", "Imp", "Wisp", "Shade", "Creep"][randInt(0, 5)], t
+      ));
     }
     if (waveNum % 5 === 0) spawnBoss();
   }
 
   function spawnBoss() {
-    bossTimer = C.bossInterval;
     const hpMult = 1 + waveNum * 0.2;
     const dmgMult = 1 + waveNum * 0.1;
-    const idx = nextBossId++ % BOSS_NAMES.length;
+    const names = ["Void Witch", "Shadow Lord", "Flame Serpent", "Frost Giant", "Stone Golem", "Storm Caller"];
     const colors = ["#ff4444", "#7c3aed", "#ff6b3d", "#4da6ff", "#8b6914", "#d4b8ff"];
+    const idx = randInt(0, names.length - 1);
     const ang = rand(0, Math.PI * 2);
-    const ex = clamp(player.x + Math.cos(ang) * C.spawnRadius, 100, world.w - 100);
-    const ey = clamp(player.y + Math.sin(ang) * C.spawnRadius, 100, world.h - 100);
-    enemies.push(new Enemy(ex, ey, ENEMY_TYPES.boss.baseHP * hpMult, ENEMY_TYPES.boss.baseDmg * dmgMult, ENEMY_TYPES.boss.spd, colors[idx], BOSS_NAMES[idx], "boss"));
+    enemies.push(new Enemy(
+      clamp(player.x + Math.cos(ang) * C.spawnRadius, 100, world.w - 100),
+      clamp(player.y + Math.sin(ang) * C.spawnRadius, 100, world.h - 100),
+      ENEMY_TYPES.boss.baseHP * hpMult, ENEMY_TYPES.boss.baseDmg * dmgMult,
+      ENEMY_TYPES.boss.spd, colors[idx], names[idx], "boss"
+    ));
     screenShake = 10;
     addPopup(player.x, player.y - 50, "⚠️ BOSS!", "#ff4444");
   }
@@ -464,14 +527,13 @@
   }
 
   // ============================================================
-  // DRAFT (Vampire Survivors style)
+  // DRAFT
   // ============================================================
   function isDraftOpen() { const el = $("levelup-overlay"); return el && !el.classList.contains("hidden"); }
 
   function buildDraftPool() {
     const pool = [];
-    const elemKeys = Object.keys(ELEMENTS).filter(e => ["fire", "water", "earth", "shadow"].includes(e));
-    for (const ek of elemKeys) {
+    for (const ek of ["fire", "water", "earth", "shadow"]) {
       const el = ELEMENTS[ek];
       pool.push({ icon: el.icon, name: el.name, desc: el.desc, tag: "Element", weight: 20, apply: () => { player.addElement(ek); addPopup(player.x, player.y - 40, `${el.icon} ${el.name}`, el.color); } });
     }
@@ -480,7 +542,7 @@
       const existing = player.weapons.find(pw => pw.id === wKey);
       if (existing) {
         if (existing.level < C.weaponLevelMax) {
-          pool.push({ icon: w.icon, name: `${w.name} Up`, desc: `Level ${existing.level + 1}/${C.weaponLevelMax}`, tag: "Upgrade", weight: 25, apply: () => { existing.level++; } });
+          pool.push({ icon: w.icon, name: `${w.name} Up`, desc: `Lv ${existing.level + 1}/${C.weaponLevelMax}`, tag: "Upgrade", weight: 25, apply: () => { existing.level++; } });
         } else if (w.evolve && player.elements[w.evolve.needsElement]) {
           pool.push({ icon: "✨", name: `Evolve ${w.name}`, desc: `→ ${WEAPON_DEFS[w.evolve.into].name}`, tag: "Evolve", weight: 40, apply: () => { const idx = player.weapons.indexOf(existing); player.weapons[idx] = { id: w.evolve.into, level: 1, timer: 0, ...WEAPON_DEFS[w.evolve.into] }; addPopup(player.x, player.y - 50, `✨ EVOLVED!`, "#f1c40f"); screenShake = 15; } });
         }
@@ -493,8 +555,7 @@
         pool.push({ icon: p.icon, name: p.name, desc: p.desc, tag: "Passive", weight: 15, apply: () => { player.addPassive(p.id); } });
       }
     }
-    pool.push({ icon: "❤️", name: "Heal", desc: "Restore 40% max HP", tag: "Recovery", weight: 12, apply: () => { player.heal(player.maxHP * 0.4); } });
-    pool.push({ icon: "⚡", name: "Energy Surge", desc: "Full energy restore + 20 max", tag: "Recovery", weight: 10, apply: () => { player.maxEnergy += 20; player.energy = player.maxEnergy; } });
+    pool.push({ icon: "❤️", name: "Heal", desc: "Restore 40% HP", tag: "Recovery", weight: 12, apply: () => { player.heal(player.maxHP * 0.4); } });
     return pool;
   }
 
@@ -526,14 +587,7 @@
   }
 
   // ============================================================
-  // FOOD / XP MOTES
-  // ============================================================
-  function spawnFood() {
-    return { x: rand(40, world.w - 40), y: rand(40, world.h - 40), color: hsl(rand(250, 320), 60, 65), pulse: 0, value: rand(2, 6) };
-  }
-
-  // ============================================================
-  // PARTICLES / POPUPS / DECALS
+  // PARTICLES / POPUPS
   // ============================================================
   function spawnParticles(x, y, color, n) {
     for (let i = 0; i < n; i++) {
@@ -548,11 +602,11 @@
   }
 
   // ============================================================
-  // INPUT
+  // INPUT (cross-platform: keyboard, mouse, touch, gamepad)
   // ============================================================
   function getPlayerInput() {
     if (joy.active) return joy.vector;
-    if (mode === "single" && !isTouch) {
+    if (!isTouch) {
       const dx = mouse.x - view.w / 2, dy = mouse.y - view.h / 2, m = Math.hypot(dx, dy);
       return m > 1 ? { x: dx / m, y: dy / m } : { x: 0, y: 0 };
     }
@@ -571,6 +625,10 @@
     player.dodgeUntil = Date.now() + C.dodgeDur;
     player.dodgeCooldownUntil = Date.now() + C.dodgeCooldown;
     spawnParticles(player.x, player.y, "#b794f6", 8);
+    // Tell server
+    if (ws && ws.readyState === 1) {
+      ws.send(JSON.stringify({ type: "input", x: player.input.x, y: player.input.y, angle: ang }));
+    }
   }
 
   function toggleShield() {
@@ -599,44 +657,64 @@
     }
     const m = Math.hypot(ix, iy);
     player.input = m > 0 ? { x: ix / m, y: iy / m } : getPlayerInput();
+    sendInput();
   }
 
   // Mouse
   canvas.addEventListener("mousemove", (e) => { mouse.x = e.clientX; mouse.y = e.clientY; });
-  canvas.addEventListener("mousedown", (e) => { if (e.button === 0) mouse.x = e.clientX; mouse.y = e.clientY; });
+  canvas.addEventListener("mousedown", (e) => { if (e.button === 0) { mouse.x = e.clientX; mouse.y = e.clientY; } });
   canvas.addEventListener("contextmenu", (e) => e.preventDefault());
 
-  // Pointer (joystick + aim)
-  canvas.addEventListener("pointerdown", (e) => {
-    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size === 1) {
-      joy.active = true; joy.sx = e.clientX; joy.sy = e.clientY; joy.cx = e.clientX; joy.cy = e.clientY;
-    }
-    if (isTouch && e.clientX > view.w / 2) { aim.active = true; aim.x = e.clientX; aim.y = e.clientY; }
-  });
-  canvas.addEventListener("pointermove", (e) => {
-    if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (joy.active && pointers.size === 1) { joy.cx = e.clientX; joy.cy = e.clientY; }
-    if (aim.active) { aim.x = e.clientX; aim.y = e.clientY; e.preventDefault(); }
-  });
-  canvas.addEventListener("pointerup", (e) => { pointers.delete(e.pointerId); if (pointers.size === 0) { joy.active = false; aim.active = false; } });
-  const aim = { x: 0, y: 0, active: false };
+  // Joystick DOM elements
+  const joyBase = $("joystick-base");
+  const joyThumb = $("joystick-thumb");
+  const joyZone = $("joystick-zone");
+  let joyPointerId = null;
 
-  function aimDir(from) {
-    if (aim.active) return Math.atan2(aim.y - view.h / 2, aim.x - view.w / 2);
-    if (from.input && Math.hypot(from.input.x, from.input.y) > 0.18) return Math.atan2(from.input.y, from.input.x);
-    return from._lastAngle || 0;
+  if (joyZone) {
+    joyZone.addEventListener("pointerdown", (e) => {
+      e.preventDefault();
+      joyPointerId = e.pointerId;
+      joy.active = true;
+      joy.sx = e.clientX; joy.sy = e.clientY;
+      joy.cx = e.clientX; joy.cy = e.clientY;
+      // Position base at touch point
+      if (joyBase) {
+        joyBase.classList.add("active");
+        joyBase.style.left = e.clientX + "px";
+        joyBase.style.top = e.clientY + "px";
+      }
+    });
   }
 
+  window.addEventListener("pointermove", (e) => {
+    if (e.pointerId === joyPointerId) {
+      joy.cx = e.clientX; joy.cy = e.clientY;
+      const dx = joy.cx - joy.sx, dy = joy.cy - joy.sy, d = Math.hypot(dx, dy);
+      const maxR = 50;
+      const clampD = Math.min(d, maxR);
+      const nx = d > 0 ? dx / d : 0, ny = d > 0 ? dy / d : 0;
+      joy.vector = { x: nx * (clampD / maxR), y: ny * (clampD / maxR) };
+      // Move thumb
+      if (joyThumb) {
+        joyThumb.style.transform = `translate(${nx * clampD}px, ${ny * clampD}px)`;
+      }
+      e.preventDefault();
+    }
+  });
+
+  window.addEventListener("pointerup", (e) => {
+    if (e.pointerId === joyPointerId) {
+      joyPointerId = null;
+      joy.active = false;
+      joy.vector = { x: 0, y: 0 };
+      if (joyBase) joyBase.classList.remove("active");
+      if (joyThumb) joyThumb.style.transform = "translate(0,0)";
+    }
+  });
+
   function drawJoystick() {
-    if (!joy.active || !isTouch) return;
-    const dx = joy.cx - joy.sx, dy = joy.cy - joy.sy, d = Math.hypot(dx, dy);
-    const clampD = Math.min(d, 50);
-    const nx = d > 0 ? dx / d : 0, ny = d > 0 ? dy / d : 0;
-    ctx.globalAlpha = 0.25;
-    ctx.beginPath(); ctx.arc(joy.sx, joy.sy, 50, 0, Math.PI * 2); ctx.fillStyle = "#fffaf0"; ctx.fill(); ctx.strokeStyle = "#2b1d12"; ctx.lineWidth = 1.5; ctx.stroke();
-    ctx.beginPath(); ctx.arc(joy.sx + nx * clampD, joy.sy + ny * clampD, 22, 0, Math.PI * 2); ctx.fillStyle = "#7c5cbf"; ctx.fill();
-    ctx.globalAlpha = 1;
+    // Joystick now uses DOM elements, nothing to draw on canvas
   }
 
   // ============================================================
@@ -644,10 +722,8 @@
   // ============================================================
   function updateCamera() {
     if (!player) return;
-    const follow = player;
-    const tx = follow.x - view.w / 2, ty = follow.y - view.h / 2;
-    camera.x = lerp(camera.x, tx, 0.08);
-    camera.y = lerp(camera.y, ty, 0.08);
+    camera.x = lerp(camera.x, player.x - view.w / 2, 0.08);
+    camera.y = lerp(camera.y, player.y - view.h / 2, 0.08);
     view.scale = lerp(view.scale, view.targetScale, 0.04);
   }
 
@@ -666,15 +742,19 @@
   // ============================================================
   function drawArena() {
     const left = camera.x - 60, top = camera.y - 60, right = camera.x + visibleW() + 60, bottom = camera.y + visibleH() + 60;
+    // Parchment background
     ctx.fillStyle = "#fdf6e3"; ctx.fillRect(left, top, right - left, bottom - top);
+    // Subtle ink washes
     ctx.fillStyle = "rgba(212,184,255,0.06)"; ctx.beginPath(); ctx.ellipse(world.w * 0.3, world.h * 0.3, 500, 400, 0.1, 0, Math.PI * 2); ctx.fill();
     ctx.fillStyle = "rgba(232,184,106,0.05)"; ctx.beginPath(); ctx.ellipse(world.w * 0.7, world.h * 0.7, 550, 380, -0.15, 0, Math.PI * 2); ctx.fill();
+    // Grid
     ctx.strokeStyle = "rgba(43,29,18,0.04)"; ctx.lineWidth = 1;
     const g = 120;
     ctx.beginPath();
     for (let x = Math.floor(left / g) * g; x <= right; x += g) { ctx.moveTo(x, top); ctx.lineTo(x, bottom); }
     for (let y = Math.floor(top / g) * g; y <= bottom; y += g) { ctx.moveTo(left, y); ctx.lineTo(right, y); }
     ctx.stroke();
+    // World border
     ctx.strokeStyle = "rgba(43,29,18,0.25)"; ctx.lineWidth = 2.5; ctx.strokeRect(0, 0, world.w, world.h);
   }
 
@@ -685,7 +765,7 @@
       const ps = 1 + Math.sin(f.pulse) * 0.15;
       ctx.globalAlpha = Math.min(1, f.life / 500);
       ctx.beginPath(); ctx.arc(f.x, f.y, f.radius * ps, 0, Math.PI * 2);
-      ctx.fillStyle = f.color; ctx.fill();
+      ctx.fillStyle = f.color || hsl(270 + (f.v || 0) * 3, 70, 60); ctx.fill();
       ctx.strokeStyle = "rgba(255,255,255,0.5)"; ctx.lineWidth = 1; ctx.stroke();
       ctx.globalAlpha = 1;
     }
@@ -694,13 +774,11 @@
   function drawProjectiles() {
     for (const p of projectiles) {
       if (!inView(p.x, p.y, p.radius + 10)) continue;
-      const col = ELEMENTS[p.element]?.color || "#fff";
+      const col = ELEMENTS[p.element]?.color || p.color || "#fff";
       const glow = ELEMENTS[p.element]?.glow || "rgba(255,255,255,0.3)";
       ctx.save();
       ctx.shadowColor = glow; ctx.shadowBlur = 10;
-      ctx.beginPath();
-      if (p.nova || p.aoe) { ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); }
-      else { ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2); }
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
       ctx.fillStyle = col; ctx.fill();
       ctx.shadowBlur = 0;
       ctx.fillStyle = "rgba(255,255,255,0.4)";
@@ -718,45 +796,41 @@
     }
   }
 
+  function drawEnemyShape(e) {
+    const r = e.radius;
+    ctx.beginPath();
+    if (e.type === "boss") {
+      ctx.moveTo(e.x, e.y - r * 1.2);
+      ctx.lineTo(e.x + r, e.y + r * 0.6);
+      ctx.lineTo(e.x - r, e.y + r * 0.6);
+      ctx.closePath();
+      ctx.shadowColor = e.color; ctx.shadowBlur = 20;
+    } else if (e.type === "tank") {
+      ctx.rect(e.x - r, e.y - r, r * 2, r * 2);
+    } else if (e.type === "ranged") {
+      for (let i = 0; i < 5; i++) { const a = i * 1.256 - Math.PI / 2; const px = e.x + Math.cos(a) * r, py = e.y + Math.sin(a) * r; i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); }
+      ctx.closePath();
+    } else {
+      ctx.arc(e.x, e.y, r + Math.sin(e.wobble || 0) * 1.2, 0, Math.PI * 2);
+    }
+  }
+
   function drawEnemies() {
     for (const e of enemies) {
       if (!e.alive || !inView(e.x, e.y, e.radius + 30)) continue;
-      const r = e.radius, wob = Math.sin(e.wobble) * 1.2;
+      const r = e.radius;
       ctx.save();
-      if (Date.now() < e.stunUntil) ctx.globalAlpha = 0.5;
-      if (Date.now() < e.slowUntil) { ctx.beginPath(); ctx.arc(e.x, e.y, r + 4, 0, Math.PI * 2); ctx.fillStyle = "rgba(77,166,255,0.18)"; ctx.fill(); }
-      if (Date.now() < e.burnUntil) { ctx.beginPath(); ctx.arc(e.x, e.y, r + 3, 0, Math.PI * 2); ctx.fillStyle = "rgba(255,100,0,0.15)"; ctx.fill(); }
 
-      ctx.beginPath();
-      if (e.type === "boss") {
-        ctx.moveTo(e.x, e.y - r * 1.2);
-        ctx.lineTo(e.x + r, e.y + r * 0.6);
-        ctx.lineTo(e.x - r, e.y + r * 0.6);
-        ctx.closePath();
-        ctx.shadowColor = e.color; ctx.shadowBlur = 20;
-      } else if (e.type === "tank") {
-        ctx.rect(e.x - r, e.y - r, r * 2, r * 2);
-      } else if (e.type === "ranged") {
-        for (let i = 0; i < 5; i++) { const a = i * 1.256 - Math.PI / 2; const px = e.x + Math.cos(a) * r, py = e.y + Math.sin(a) * r; i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py); }
-        ctx.closePath();
-      } else {
-        ctx.arc(e.x, e.y, r + wob, 0, Math.PI * 2);
-      }
+      drawEnemyShape(e);
       ctx.fillStyle = e.color; ctx.fill();
       ctx.shadowBlur = 0;
       ctx.strokeStyle = "rgba(43,29,18,0.25)"; ctx.lineWidth = 1.5; ctx.stroke();
 
+      // Highlight
       ctx.fillStyle = "rgba(255,255,255,0.3)";
       ctx.beginPath(); ctx.ellipse(e.x - r * 0.25, e.y - r * 0.3, r * 0.28, r * 0.18, -0.5, 0, Math.PI * 2); ctx.fill();
 
-      if (e.type === "tank") {
-        ctx.strokeStyle = "rgba(255,255,255,0.2)"; ctx.lineWidth = 2;
-        ctx.strokeRect(e.x - r * 0.5, e.y - r * 0.5, r, r);
-      } else if (e.type === "ranged") {
-        ctx.fillStyle = "rgba(255,255,255,0.2)";
-        ctx.beginPath(); ctx.arc(e.x, e.y, r * 0.35, 0, Math.PI * 2); ctx.fill();
-      }
-
+      // HP bar
       if (e.hp < e.maxHP && e.alive) {
         const bw = r * 1.8, bh = 3.5;
         ctx.fillStyle = "rgba(43,29,18,0.22)"; ctx.fillRect(e.x - bw / 2, e.y - r - 10, bw, bh);
@@ -764,11 +838,47 @@
         ctx.fillRect(e.x - bw / 2, e.y - r - 10, bw * (e.hp / e.maxHP), bh);
       }
 
+      // Name
       ctx.fillStyle = "#2b1d12"; ctx.font = `700 ${Math.max(9, r * 0.28)}px system-ui,sans-serif`;
       ctx.textAlign = "center"; ctx.textBaseline = "middle";
       ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(253,246,227,0.9)";
       ctx.strokeText(e.name, e.x, e.y + r + 12);
       ctx.fillText(e.name, e.x, e.y + r + 12);
+      ctx.restore();
+    }
+  }
+
+  function drawOtherPlayers() {
+    for (const [, op] of otherPlayers) {
+      if (!op.alive || !inView(op.x, op.y, 30)) continue;
+      const r = 22;
+      const wob = Math.sin(gameTime * 0.008) * 1.4;
+      ctx.save();
+
+      // Shadow
+      ctx.beginPath(); ctx.ellipse(op.x, op.y + r * 0.85, r * 0.9, r * 0.35, 0, 0, Math.PI * 2); ctx.fillStyle = "rgba(43,29,18,0.12)"; ctx.fill();
+
+      // Body
+      ctx.beginPath(); ctx.arc(op.x, op.y, r + wob, 0, Math.PI * 2);
+      const grad = ctx.createRadialGradient(op.x - r * 0.2, op.y - r * 0.2, r * 0.1, op.x, op.y, r + wob);
+      grad.addColorStop(0, op.color); grad.addColorStop(1, "#b794f6");
+      ctx.fillStyle = grad; ctx.fill();
+      ctx.lineWidth = 1.2; ctx.strokeStyle = "rgba(43,29,18,0.15)"; ctx.stroke();
+      ctx.beginPath(); ctx.ellipse(op.x - r * 0.26, op.y - r * 0.3, r * 0.28, r * 0.18, -0.5, 0, Math.PI * 2); ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.fill();
+
+      // Witch hat
+      drawWitchHat(op.x, op.y - r * 0.58, r);
+
+      // HP bar
+      const bw = r * 2, bh = 4;
+      ctx.fillStyle = "rgba(43,29,18,0.22)"; ctx.fillRect(op.x - bw / 2, op.y - r - 14, bw, bh);
+      ctx.fillStyle = "#7c5cbf"; ctx.fillRect(op.x - bw / 2, op.y - r - 14, bw * (op.hp / op.maxHP), bh);
+
+      // Name
+      ctx.fillStyle = "#2b1d12"; ctx.font = "700 11px system-ui,sans-serif"; ctx.textAlign = "center";
+      ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(253,246,227,0.9)";
+      ctx.strokeText(op.name, op.x, op.y - r - 18);
+      ctx.fillText(op.name, op.x, op.y - r - 18);
       ctx.restore();
     }
   }
@@ -780,31 +890,39 @@
     ctx.save();
     if (now < player.iFrameUntil) ctx.globalAlpha = 0.35;
 
+    // Shield glow
     if (player.shield > 5) {
       ctx.beginPath(); ctx.arc(player.x, player.y, r + 10, 0, Math.PI * 2);
-      const shieldPct = player.shield / player.maxShield;
-      ctx.strokeStyle = `rgba(124,92,191,${0.3 + shieldPct * 0.5})`; ctx.lineWidth = 2; ctx.stroke();
-      ctx.fillStyle = `rgba(124,92,191,${0.05 + shieldPct * 0.08})`; ctx.fill();
+      const sp = player.shield / player.maxShield;
+      ctx.strokeStyle = `rgba(124,92,191,${0.3 + sp * 0.5})`; ctx.lineWidth = 2; ctx.stroke();
+      ctx.fillStyle = `rgba(124,92,191,${0.05 + sp * 0.08})`; ctx.fill();
     }
 
+    // Shadow
     ctx.beginPath(); ctx.ellipse(player.x, player.y + r * 0.85, r * 0.9, r * 0.35, 0, 0, Math.PI * 2); ctx.fillStyle = "rgba(43,29,18,0.12)"; ctx.fill();
+    // Body
     ctx.beginPath(); ctx.arc(player.x, player.y, r + wob, 0, Math.PI * 2);
     const bodyGrad = ctx.createRadialGradient(player.x - r * 0.2, player.y - r * 0.2, r * 0.1, player.x, player.y, r + wob);
     bodyGrad.addColorStop(0, player.color); bodyGrad.addColorStop(1, "#b794f6");
     ctx.fillStyle = bodyGrad; ctx.fill();
     ctx.lineWidth = 1.2; ctx.strokeStyle = "rgba(43,29,18,0.15)"; ctx.stroke();
+    // Highlight
     ctx.beginPath(); ctx.ellipse(player.x - r * 0.26, player.y - r * 0.3, r * 0.28, r * 0.18, -0.5, 0, Math.PI * 2); ctx.fillStyle = "rgba(255,255,255,0.35)"; ctx.fill();
 
+    // Witch hat
     drawWitchHat(player.x, player.y - r * 0.58, r);
 
+    // Smile
     ctx.beginPath(); ctx.moveTo(player.x - r * 0.4, player.y + r * 0.1); ctx.lineTo(player.x, player.y + r * 0.3); ctx.lineTo(player.x + r * 0.4, player.y + r * 0.1);
     ctx.strokeStyle = "rgba(253,246,227,0.9)"; ctx.lineWidth = Math.max(1.2, r * 0.05); ctx.lineJoin = "round"; ctx.stroke();
 
+    // Dodge trail
     if (now < player.dodgeUntil) {
       ctx.beginPath(); ctx.arc(player.x, player.y, r + 8, 0, Math.PI * 2);
       ctx.strokeStyle = "rgba(183,148,246,0.6)"; ctx.lineWidth = 2; ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
     }
 
+    // Name
     ctx.fillStyle = "#2b1d12"; ctx.font = "700 11px system-ui,sans-serif"; ctx.textAlign = "center";
     ctx.lineWidth = 2.5; ctx.strokeStyle = "rgba(253,246,227,0.9)";
     ctx.strokeText(player.name, player.x, player.y - r - 14);
@@ -840,7 +958,7 @@
 
   function drawAimLine() {
     if (!player || !player.alive || !isTouch || !aim.active) return;
-    const ang = aimDir(player);
+    const ang = Math.atan2(aim.y - view.h / 2, aim.x - view.w / 2);
     ctx.save(); ctx.globalAlpha = 0.3; ctx.strokeStyle = "#7c5cbf"; ctx.lineWidth = 1.5;
     ctx.setLineDash([5, 5]);
     ctx.beginPath(); ctx.moveTo(player.x + Math.cos(ang) * (player.radius + 8), player.y + Math.sin(ang) * (player.radius + 8));
@@ -849,7 +967,7 @@
   }
 
   // ============================================================
-  // HUD UPDATE
+  // HUD
   // ============================================================
   function updateHUD() {
     if (!player) return;
@@ -857,7 +975,7 @@
     $("hp-fill").style.width = (player.hp / player.maxHP * 100) + "%";
     $("mana-fill").style.width = (player.shield / player.maxShield * 100) + "%";
     $("wave-display").textContent = `Wave ${waveNum}`;
-    const remain = Math.max(0, Math.floor((C.runDuration - runTimer) / 1000));
+    const remain = Math.max(0, Math.floor((600000 - runTimer) / 1000));
     $("timer-display").textContent = `${Math.floor(remain / 60)}:${(remain % 60).toString().padStart(2, "0")}`;
     updateSpellUI();
   }
@@ -882,7 +1000,7 @@
     const list = $("leaderboard-list"); if (!list) return;
     const entities = [];
     if (player && player.alive) entities.push({ name: player.name, score: Math.floor(player.hp), me: true });
-    for (const e of enemies) { if (e.alive) entities.push({ name: e.name, score: Math.floor(e.hp), me: false }); }
+    for (const [, op] of otherPlayers) { if (op.alive) entities.push({ name: op.name, score: op.hp, me: false }); }
     entities.sort((a, b) => b.score - a.score);
     list.innerHTML = entities.slice(0, 8).map(e => `<li class="${e.me ? "me" : ""}">${e.name} <span>${e.score}</span></li>`).join("");
   }
@@ -896,11 +1014,12 @@
     const sx = w / world.w, sy = h / world.h;
     mctx.strokeStyle = "rgba(43,29,18,0.18)"; mctx.lineWidth = 1; mctx.strokeRect(0.5, 0.5, w - 1, h - 1);
     for (const e of enemies) { if (!e.alive) continue; mctx.beginPath(); mctx.arc(e.x * sx, e.y * sy, e.type === "boss" ? 3 : 1.5, 0, Math.PI * 2); mctx.fillStyle = e.type === "boss" ? "#ff4444" : "rgba(124,92,191,0.4)"; mctx.fill(); }
+    for (const [, op] of otherPlayers) { if (!op.alive) continue; mctx.beginPath(); mctx.arc(op.x * sx, op.y * sy, 2.5, 0, Math.PI * 2); mctx.fillStyle = op.color; mctx.fill(); }
     if (player && player.alive) { mctx.beginPath(); mctx.arc(player.x * sx, player.y * sy, 2.5, 0, Math.PI * 2); mctx.fillStyle = "#2b1d12"; mctx.fill(); mctx.strokeStyle = "#fffaf0"; mctx.lineWidth = 1; mctx.stroke(); }
   }
 
   // ============================================================
-  // COLLISION
+  // COLLISION (single-player)
   // ============================================================
   function handleCollisions() {
     if (!player || !player.alive) return;
@@ -921,7 +1040,6 @@
       const p = projectiles[i];
       p.life -= dt;
       if (p.life <= 0) { projectiles.splice(i, 1); continue; }
-
       if (p.orbit && player && player.alive) {
         p.orbitAngle += 0.05;
         p.x = player.x + Math.cos(p.orbitAngle) * p.orbitArea;
@@ -929,13 +1047,11 @@
       } else {
         p.x += p.vx * (dt / 16); p.y += p.vy * (dt / 16);
       }
-
       if (p.homing && p.homingTarget && p.homingTarget.alive) {
         const a = Math.atan2(p.homingTarget.y - p.y, p.homingTarget.x - p.x);
         p.vx = lerp(p.vx, Math.cos(a) * (p.weapon?.projSpeed || 4), 0.1);
         p.vy = lerp(p.vy, Math.sin(a) * (p.weapon?.projSpeed || 4), 0.1);
       }
-
       if (p.owner === "player") {
         for (const e of enemies) {
           if (!e.alive) continue;
@@ -949,7 +1065,6 @@
         }
       }
     }
-
     for (let i = enemyProjectiles.length - 1; i >= 0; i--) {
       const p = enemyProjectiles[i];
       p.life -= dt; if (p.life <= 0) { enemyProjectiles.splice(i, 1); continue; }
@@ -969,28 +1084,34 @@
     const dt = Math.min(32, ts - lastTime); lastTime = ts; gameTime += dt;
     runTimer += dt;
 
-    waveTimer -= dt;
-    if (waveTimer <= 0 && player && player.alive) spawnWave();
-    if (runTimer >= C.runDuration && !enemies.some(e => e.alive && e.type === "boss")) { winGame(); return; }
+    if (mode === "single") {
+      waveTimer -= dt;
+      if (waveTimer <= 0 && player && player.alive) spawnWave();
+    }
 
     if (screenShake > 0) screenShake = Math.max(0, screenShake - dt * 0.03);
 
     driveInputs();
-    player.update(dt);
-    for (const e of enemies) e.update(dt);
-    enemies = enemies.filter(e => e.alive);
-    collectXPGems();
-    handleCollisions();
-    tickProjectiles(dt);
+    if (mode === "single") {
+      player?.update(dt);
+      for (const e of enemies) e.update(dt);
+      enemies = enemies.filter(e => e.alive);
+      collectXPGems();
+      handleCollisions();
+      tickProjectiles(dt);
+    }
+
     updateParticles(dt);
     updateCamera();
 
+    // Render
     screenTransform(); ctx.clearRect(0, 0, view.w * dpr, view.h * dpr);
     worldTransform();
     drawArena();
     drawFood();
     drawAimLine();
     drawEnemies();
+    drawOtherPlayers();
     drawProjectiles();
     drawEnemyProjectiles();
     drawPlayer();
@@ -1008,17 +1129,15 @@
   // ============================================================
   function startGame(modeSel) {
     mode = modeSel;
-    const fc = C.foodCount[difficulty] || 300;
     world = { ...C.world };
-    xpGems = []; for (let i = 0; i < fc; i++) xpGems.push(spawnFood());
-    enemies = []; projectiles = []; particles = []; popups = []; decals = []; enemyProjectiles = [];
+    xpGems = []; enemies = []; projectiles = []; particles = []; popups = []; enemyProjectiles = [];
+    otherPlayers.clear();
     player = null; gameTime = 0; runTimer = 0;
-    waveNum = 0; waveTimer = 3000; bossTimer = C.bossInterval;
-    nextBossId = 1;
-    statKills = 0; statMaxCombo = 0;
+    waveNum = 0; waveTimer = 3000;
+    statKills = 0;
     xp = 0; level = 1; xpToNext = C.xpBase; pendingLevelUps = 0;
 
-    const n1 = ($("name-input").value || "Witch").trim().slice(0, 16) || "Witch";
+    const n1 = ($("name-input")?.value || "Witch").trim().slice(0, 16) || "Witch";
     player = new Player(rand(200, world.w - 200), rand(200, world.h - 200), n1, "#d4b8ff");
     player.addElement("fire");
     player.addWeapon("flameOrbit");
@@ -1042,19 +1161,9 @@
     $("final-score").textContent = `Wave ${waveNum} — ${level} Lv`;
     $("stat-time").textContent = `${m}:${s.toString().padStart(2, "0")}`;
     $("stat-kills").textContent = statKills;
-    $("stat-combo").textContent = statMaxCombo;
+    $("stat-combo").textContent = level;
     $("stat-waves").textContent = waveNum;
     $("end-screen").classList.remove("hidden"); $("hud").classList.add("hidden"); $("mobile-controls").classList.add("hidden"); $("levelup-overlay").classList.add("hidden");
-  }
-
-  function winGame() {
-    running = false;
-    $("final-score").textContent = "VICTORY!";
-    $("stat-time").textContent = "10:00";
-    $("stat-kills").textContent = statKills;
-    $("stat-combo").textContent = statMaxCombo;
-    $("stat-waves").textContent = waveNum;
-    $("end-screen").classList.remove("hidden"); $("hud").classList.add("hidden"); $("mobile-controls").classList.add("hidden");
   }
 
   function togglePause() {
@@ -1067,31 +1176,27 @@
   // ============================================================
   // DOM BINDINGS
   // ============================================================
-  const $ = (id) => document.getElementById(id);
-
   $("resume-btn")?.addEventListener("click", togglePause);
   $("quit-btn")?.addEventListener("click", () => {
     running = false; cancelAnimationFrame(animationId);
+    if (ws) { try { ws.close(); } catch (_) {} ws = null; }
     $("pause-menu").classList.add("hidden"); $("end-screen").classList.add("hidden"); $("levelup-overlay").classList.add("hidden");
     $("start-screen").classList.remove("hidden"); $("hud").classList.add("hidden"); $("mobile-controls").classList.add("hidden");
   });
   $("play-solo")?.addEventListener("click", () => startGame("single"));
-  $("play-online")?.addEventListener("click", () => $("online-options")?.classList.toggle("hidden"));
-  $("connect-online-btn")?.addEventListener("click", () => {
-    const url = ($("server-input")?.value || "ws://127.0.0.1:3000").trim();
-    if (window.witchConnect) window.witchConnect(url);
+  $("play-online")?.addEventListener("click", () => {
+    const url = ($("server-input")?.value || `ws://${location.hostname || "127.0.0.1"}:3000`).trim();
+    startGame("online");
+    connectWS(url);
   });
   $("restart-btn")?.addEventListener("click", () => { $("end-screen").classList.add("hidden"); $("start-screen").classList.remove("hidden"); });
   $("dodge-btn")?.addEventListener("pointerdown", (e) => { e.preventDefault(); doDodge(); });
   $("shield-btn")?.addEventListener("pointerdown", (e) => { e.preventDefault(); toggleShield(); });
-  $("name-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") startGame("single"); });
+  $("name-input")?.addEventListener("keydown", (e) => { if (e.key === "Enter") $("play-solo")?.click(); });
   document.querySelectorAll(".diff-btn").forEach(b => b.addEventListener("click", () => {
     document.querySelectorAll(".diff-btn").forEach(x => x.classList.remove("active"));
     b.classList.add("active"); difficulty = b.dataset.diff;
   }));
-  document.querySelectorAll(".spell-btn").forEach((btn, idx) => {
-    btn.addEventListener("pointerdown", (e) => { e.preventDefault(); /* touch spell cast - future */ });
-  });
 
   // Touch: prevent default on game canvas
   canvas.addEventListener("touchstart", (e) => e.preventDefault(), { passive: false });
