@@ -76,6 +76,14 @@
     maxR: 70, dead: 12,
     vector: { x: 0, y: 0 },
   };
+  // P2 joystick (right half in local2p)
+  const joy2 = {
+    active: false, id: null, ox: 0, oy: 0, x: 0, y: 0,
+    maxR: 70, dead: 12,
+    vector: { x: 0, y: 0 },
+  };
+  // Dual-joystick p1/p2 input (used by driveInputs in local2p)
+  const dualJoy = { p1: { x: 0, y: 0 }, p2: { x: 0, y: 0 } };
   // pointers for pinch-zoom
   const pointers = new Map();
 
@@ -373,8 +381,8 @@
   function driveInputs() {
     if (mode === "single") { if (player && player.alive) player.input = getPlayerInput(); }
     else if (mode === "local2p") {
-      if (players[0] && players[0].alive) players[0].input = joy.p1 || { x: 0, y: 0 };
-      if (players[1] && players[1].alive) players[1].input = joy.p2 || { x: 0, y: 0 };
+      if (players[0] && players[0].alive) players[0].input = joy.active ? joy.vector : { x: 0, y: 0 };
+      if (players[1] && players[1].alive) players[1].input = joy2.active ? joy2.vector : { x: 0, y: 0 };
     }
   }
 
@@ -414,13 +422,24 @@
     ctx.globalAlpha = 1;
   }
   function drawJoystick() {
-    if (!joy.active) return;
+    if (!joy.active && !joy2.active) return;
     screenTransform();
-    ctx.beginPath(); ctx.arc(joy.ox, joy.oy, joy.maxR, 0, Math.PI * 2);
-    ctx.fillStyle = "rgba(180,120,255,0.10)"; ctx.fill();
-    ctx.lineWidth = 2; ctx.strokeStyle = "rgba(212,184,255,0.5)"; ctx.stroke();
-    const kx = joy.ox + joy.vector.x * joy.maxR, ky = joy.oy + joy.vector.y * joy.maxR;
-    ctx.beginPath(); ctx.arc(kx, ky, 28, 0, Math.PI * 2); ctx.fillStyle = "rgba(212,184,255,0.55)"; ctx.fill();
+    // P1 joystick (left)
+    if (joy.active) {
+      ctx.beginPath(); ctx.arc(joy.ox, joy.oy, joy.maxR, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(180,120,255,0.10)"; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = "rgba(212,184,255,0.5)"; ctx.stroke();
+      const kx = joy.ox + joy.vector.x * joy.maxR, ky = joy.oy + joy.vector.y * joy.maxR;
+      ctx.beginPath(); ctx.arc(kx, ky, 28, 0, Math.PI * 2); ctx.fillStyle = "rgba(212,184,255,0.55)"; ctx.fill();
+    }
+    // P2 joystick (right half, magenta tint)
+    if (joy2.active) {
+      ctx.beginPath(); ctx.arc(joy2.ox, joy2.oy, joy2.maxR, 0, Math.PI * 2);
+      ctx.fillStyle = "rgba(255,100,160,0.10)"; ctx.fill();
+      ctx.lineWidth = 2; ctx.strokeStyle = "rgba(255,140,180,0.5)"; ctx.stroke();
+      const kx = joy2.ox + joy2.vector.x * joy2.maxR, ky = joy2.oy + joy2.vector.y * joy2.maxR;
+      ctx.beginPath(); ctx.arc(kx, ky, 28, 0, Math.PI * 2); ctx.fillStyle = "rgba(255,140,180,0.55)"; ctx.fill();
+    }
   }
 
   function loop(ts) {
@@ -590,11 +609,28 @@
     const ux = dx / (d || 1), uy = dy / (d || 1);
     joy.vector.x = ux * curve; joy.vector.y = uy * curve;
   }
+  function setJoy2FromPointer(e) {
+    const dx = e.clientX - joy2.ox, dy = e.clientY - joy2.oy;
+    const d = Math.hypot(dx, dy), norm = Math.min(d, joy2.maxR) / joy2.maxR;
+    if (norm * joy2.maxR < joy2.dead) { joy2.vector.x = 0; joy2.vector.y = 0; return; }
+    const curve = norm * norm;
+    const ux = dx / (d || 1), uy = dy / (d || 1);
+    joy2.vector.x = ux * curve; joy2.vector.y = uy * curve;
+  }
   canvas.addEventListener("pointerdown", (e) => {
     if (mode === "net" && (!player || !player.alive)) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size >= 2) return; // pinch, not joystick
-    if (e.clientX < view.w * 0.5 && !joy.active) {
+    const isRightHalf = e.clientX >= view.w * 0.5;
+    const is2P = mode === "local2p";
+    if (isRightHalf && is2P && !joy2.active) {
+      // P2 joystick (right half)
+      joy2.active = true; joy2.id = e.pointerId; joy2.ox = e.clientX; joy2.oy = e.clientY;
+      joy2.vector.x = 0; joy2.vector.y = 0;
+      try { canvas.setPointerCapture(e.pointerId); } catch {}
+      e.preventDefault();
+    } else if (!isRightHalf && !joy.active) {
+      // P1 joystick (left half) — also P2 in non-2P modes
       joy.active = true; joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY;
       joy.vector.x = 0; joy.vector.y = 0;
       try { canvas.setPointerCapture(e.pointerId); } catch {}
@@ -606,6 +642,7 @@
   canvas.addEventListener("pointermove", (e) => {
     if (pointers.has(e.pointerId)) pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (joy.active && e.pointerId === joy.id) { setJoyFromPointer(e); e.preventDefault(); return; }
+    if (joy2.active && e.pointerId === joy2.id) { setJoy2FromPointer(e); e.preventDefault(); return; }
     if (pointers.size === 2) { // pinch zoom
       const pts = [...pointers.values()];
       const d = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
@@ -621,6 +658,9 @@
     if (joy.active && e.pointerId === joy.id) {
       joy.active = false; joy.id = null; joy.vector.x = 0; joy.vector.y = 0;
       if (mode === "single" && player) player.input = { x: 0, y: 0 };
+    }
+    if (joy2.active && e.pointerId === joy2.id) {
+      joy2.active = false; joy2.id = null; joy2.vector.x = 0; joy2.vector.y = 0;
     }
   }
   canvas.addEventListener("pointerup", endPointer);
