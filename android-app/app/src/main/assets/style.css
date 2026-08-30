@@ -196,12 +196,12 @@ html, body {
 
 #spell-buttons {
   position: absolute;
-  bottom: calc(40px + env(safe-area-inset-bottom, 0px));
+  bottom: calc(20px + env(safe-area-inset-bottom, 0px));
   right: calc(20px + env(safe-area-inset-right, 0px));
   display: flex;
   flex-wrap: wrap;
-  gap: 10px;
-  max-width: 200px;
+  gap: 8px;
+  max-width: 260px;
   justify-content: flex-end;
   pointer-events: auto;
 }
@@ -626,4 +626,32 @@ button.secondary {
   .mode-btn {
     padding: 12px;
   }
+}
+
+/* Landscape adjustments */
+@media (orientation: landscape) {
+  #top-bar {
+    top: 8px; left: 8px; right: 8px;
+  }
+  #spell-slots {
+    gap: 4px;
+  }
+  .spell-slot {
+    width: 42px; height: 42px;
+  }
+  .spell-slot .key { font-size: 8px; }
+  .spell-slot .spell-icon { font-size: 16px; }
+  #leaderboard {
+    top: 60px; right: 8px; min-width: 130px; padding: 8px 12px;
+  }
+  #leaderboard h3 { font-size: 11px; }
+  #leaderboard li { font-size: 11px; }
+  #minimap { bottom: 8px; right: 8px; }
+  #minimap-canvas { width: 90px; height: 90px; }
+  #spell-buttons {
+    bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    right: calc(12px + env(safe-area-inset-right, 0px));
+    gap: 6px;
+  }
+  .spell-btn { width: 46px; height: 46px; font-size: 22px; }
 }
