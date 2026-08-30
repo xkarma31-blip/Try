@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#0a0a1a" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capent" content="yes" />
   <meta name="mobile-web-app-capable" content="yes" />
   <title>Witch.io</title>
   <link rel="stylesheet" href="style.css" />
@@ -15,39 +15,53 @@
   <!-- HUD -->
   <div id="hud" class="hidden">
     <div id="top-bar">
-      <div id="mass-display">
-        <span class="label">Power <span id="level-badge">Lv 1</span></span>
-        <span id="mass-value">0</span>
-        <div id="xp-bar"><div id="xp-fill"></div></div>
+      <div id="player-info">
+        <div id="hp-bar"><div id="hp-fill"></div></div>
+        <div id="mana-bar"><div id="mana-fill"></div></div>
+        <div id="level-row">
+          <span id="level-badge">Lv 1</span>
+          <span id="wave-display">Wave 0</span>
+          <span id="timer-display">4:00</span>
+        </div>
       </div>
+
       <div id="spell-slots">
-        <div class="spell-slot" data-key="surge"><span class="key">Q</span><span class="spell-icon">⚡</span></div>
-        <div class="spell-slot" data-key="ward"><span class="key">E</span><span class="spell-icon">🛡️</span></div>
-        <div class="spell-slot" data-key="magnet"><span class="key">R</span><span class="spell-icon">🧲</span></div>
-        <div class="spell-slot" data-key="dash"><span class="key">Space</span><span class="spell-icon">💨</span></div>
-        <div class="spell-slot" data-key="vanish"><span class="key">V</span><span class="spell-icon">🔮</span></div>
-        <div class="spell-slot" data-key="blast"><span class="key">F</span><span class="spell-icon">💣</span></div>
+        <div class="spell-slot" data-idx="0"><span class="spell-key">1</span><span class="spell-icon">—</span></div>
+        <div class="spell-slot" data-idx="1"><span class="spell-key">2</span><span class="spell-icon">—</span></div>
+        <div class="spell-slot" data-idx="2"><span class="spell-key">3</span><span class="spell-icon">—</span></div>
+        <div class="spell-slot" data-idx="3"><span class="spell-key">4</span><span class="spell-icon">—</span></div>
+        <div class="spell-slot" data-idx="4"><span class="spell-key">5</span><span class="spell-icon">—</span></div>
+        <div class="spell-slot" data-idx="5"><span class="spell-key">6</span><span class="spell-icon">—</span></div>
       </div>
     </div>
 
+    <div id="combo-weapon-row" class="hidden">
+      <span id="combo-weapon-icon">💥</span>
+      <span id="combo-weapon">—</span>
+    </div>
+
     <div id="leaderboard">
-      <h3>🧙 Coven</h3>
+      <h3>🏆 Leaderboard</h3>
       <ol id="leaderboard-list"></ol>
     </div>
 
     <div id="minimap">
-      <canvas id="minimap-canvas" width="120" height="120"></canvas>
+      <canvas id="minimap-canvas" width="100" height="100"></canvas>
     </div>
 
     <div id="mobile-controls" class="hidden">
       <div id="joystick-zone"></div>
+      <div id="action-buttons">
+        <button id="dodge-btn" class="action-btn dodge">💨</button>
+        <button id="shield-btn" class="action-btn shield">🛡️</button>
+      </div>
       <div id="spell-buttons">
-        <button class="spell-btn" data-key="surge">⚡</button>
-        <button class="spell-btn" data-key="ward">🛡️</button>
-        <button class="spell-btn" data-key="magnet">🧲</button>
-        <button class="spell-btn" data-key="dash">💨</button>
-        <button class="spell-btn" data-key="vanish">🔮</button>
-        <button class="spell-btn" data-key="blast">💣</button>
+        <button class="spell-btn" data-idx="0">1</button>
+        <button class="spell-btn" data-idx="1">2</button>
+        <button class="spell-btn" data-idx="2">3</button>
+        <button class="spell-btn" data-idx="3">4</button>
+        <button class="spell-btn" data-idx="4">5</button>
+        <button class="spell-btn" data-idx="5">6</button>
       </div>
     </div>
 
@@ -63,7 +77,7 @@
         <h1>Witch<span>.io</span></h1>
         <div class="logo-icon">🧙‍♀️</div>
       </div>
-      <p class="tagline">Atelier ink • survivor spells • last witch standing</p>
+      <p class="tagline">Elemental spellcraft • Soul Knight combat • Survive the storm</p>
 
       <div class="name-row">
         <input id="name-input" type="text" maxlength="16" placeholder="Witch name..." autocomplete="off" />
@@ -74,10 +88,6 @@
           <span class="icon">⚔️</span>
           <span class="text">Solo</span>
         </button>
-        <button id="play-duo" class="mode-btn duo">
-          <span class="icon">👥</span>
-          <span class="text">Local Duel</span>
-        </button>
         <button id="play-online" class="mode-btn online">
           <span class="icon">🌐</span>
           <span class="text">Online</span>
@@ -86,9 +96,6 @@
 
       <div id="online-options" class="hidden">
         <div class="name-row">
-          <input id="name-input-2" type="text" maxlength="16" placeholder="Player 2 name..." autocomplete="off" />
-        </div>
-        <div class="name-row">
           <input id="server-input" type="text" maxlength="120" placeholder="Server URL (ws://...)" autocomplete="off" />
         </div>
         <button id="connect-online-btn" class="mode-btn online"><span class="icon">🔗</span><span class="text">Connect</span></button>
@@ -96,7 +103,7 @@
       </div>
 
       <div class="difficulty-row">
-        <label>Bot Difficulty:</label>
+        <label>Difficulty</label>
         <div class="difficulty-buttons">
           <button class="diff-btn active" data-diff="easy">Easy</button>
           <button class="diff-btn" data-diff="medium">Medium</button>
@@ -107,23 +114,23 @@
       <div class="controls-help">
         <div class="help-section">
           <h4>🖥️ Desktop</h4>
-          <p>Move with mouse • Auto-aim wand • Q/E/R/F/V/Space for sigils • Dash has i-frames</p>
+          <p>WASD/Arrows move • 1-6 cast spells • Space dodge • Shift/E shield</p>
         </div>
         <div class="help-section">
           <h4>📱 Mobile</h4>
-          <p>Left: move • Spells auto-aim nearest foe • Tap sigils • Level-up drafts shape your build</p>
+          <p>Left: move • Right: aim+cast • Tap spells • Dodge + Shield buttons</p>
         </div>
       </div>
 
       <div class="spell-preview">
-        <h4>✨ Spells</h4>
+        <h4>✨ Elements</h4>
         <div class="spell-list">
-          <div class="spell-item"><span>⚡</span><div><strong>Surge</strong><small>Speed boost</small></div></div>
-          <div class="spell-item"><span>🛡️</span><div><strong>Ward</strong><small>Shield</small></div></div>
-          <div class="spell-item"><span>🧲</span><div><strong>Magnet</strong><small>Attract mana</small></div></div>
-          <div class="spell-item"><span>💨</span><div><strong>Dash</strong><small>Burst of speed</small></div></div>
-          <div class="spell-item"><span>🔮</span><div><strong>Vanish</strong><small>Invisibility</small></div></div>
-          <div class="spell-item"><span>💣</span><div><strong>Blast</strong><small>Push enemies</small></div></div>
+          <div class="spell-item"><span>🔥</span><div><strong>Fire</strong><small>Burn + AoE</small></div></div>
+          <div class="spell-item"><span>💧</span><div><strong>Water</strong><small>Freeze + slow</small></div></div>
+          <div class="spell-item"><span>🌍</span><div><strong>Earth</strong><small>Heavy + stun</small></div></div>
+          <div class="spell-item"><span>🌑</span><div><strong>Shadow</strong><small>Pierce + drain</small></div></div>
+          <div class="spell-item"><span>⚡</span><div><strong>Lightning</strong><small>Fire+Water</small></div></div>
+          <div class="spell-item"><span>☄️</span><div><strong>Meteor</strong><small>Fire+Earth</small></div></div>
         </div>
       </div>
     </div>
@@ -133,15 +140,15 @@
   <div id="end-screen" class="hidden">
     <div class="panel">
       <div class="end-icon">💀</div>
-      <h1>Consumed!</h1>
-      <p id="end-message">You reached a power level of <span id="final-score">0</span></p>
+      <h1>Defeated!</h1>
+      <p>You reached <span id="final-score">0</span></p>
       <div id="end-stats">
         <div class="stat"><span id="stat-time">0:00</span><label>Time</label></div>
-        <div class="stat"><span id="stat-eaten">0</span><label>Eaten</label></div>
-        <div class="stat"><span id="stat-spells">0</span><label>Spells</label></div>
-        <div class="stat"><span id="stat-max">0</span><label>Max Power</label></div>
+        <div class="stat"><span id="stat-kills">0</span><label>Kills</label></div>
+        <div class="stat"><span id="stat-combo">0</span><label>Max Combo</label></div>
+        <div class="stat"><span id="stat-waves">0</span><label>Waves</label></div>
       </div>
-      <button id="restart-btn">Cast Again ✨</button>
+      <button id="restart-btn">Try Again ✨</button>
     </div>
   </div>
 
@@ -166,9 +173,9 @@
   <!-- Level Up Draft (Vampire Survivors style) -->
   <div id="levelup-overlay" class="hidden">
     <div class="panel">
-      <div style="font-size:36px">✨</div>
-      <h2>Atelier Blessing</h2>
-      <p>Choose one — shapes your run like Vampire Survivors / Holocure</p>
+      <div style="font-size:32px">✨</div>
+      <h2>Level Up!</h2>
+      <p>Choose one — shapes your build</p>
       <div id="draft-options"></div>
     </div>
   </div>
